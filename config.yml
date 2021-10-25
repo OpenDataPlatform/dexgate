@@ -1,0 +1,6 @@
+{
+  logMode: dev,
+  logLevel:   "DEBUG",
+  bindAddr: ":9999",
+  targetUrl: "http://n0.kspray2:30999",
+}

@@ -1,0 +1,6 @@
+{
+  logMode: dev,
+  logLevel:   "DEBUG",
+  bindAddr: ":9001",
+  targetUrl: "http://localhost:8102",
+}
