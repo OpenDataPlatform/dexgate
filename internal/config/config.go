@@ -1,10 +1,8 @@
 package config
 
 import (
-	"fmt"
 	"github.com/sirupsen/logrus"
 	"net/url"
-	"os"
 )
 
 var logLevelByString = map[string]logrus.Level{
@@ -28,20 +26,11 @@ type Config struct {
 	TargetUrl    string `yaml:"targetUrl"` // The URL to forward all requests
 	// Transformed data
 	targetURL *url.URL
+	log       *logrus.Entry
 }
 
 func GetLog() *logrus.Entry {
-	llevel, ok := logLevelByString[conf.LogLevel]
-	if !ok {
-		_, _ = fmt.Fprintf(os.Stderr, "\n%s is an invalid value for logLevel\n", conf.LogLevel)
-		os.Exit(2)
-	}
-	log := logrus.WithFields(logrus.Fields{})
-	log.Logger.SetLevel(llevel)
-	if conf.LogMode == "json" {
-		log.Logger.SetFormatter(&logrus.JSONFormatter{})
-	}
-	return log
+	return conf.log
 }
 
 func GetTargetURL() *url.URL {

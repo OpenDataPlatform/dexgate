@@ -12,6 +12,10 @@ https://github.com/oauth2-proxy/oauth2-proxy
 
 https://www.youtube.com/watch?v=-TzLER2fX84
 
+## Session mgmt
+
+https://github.com/alexedwards/scs
+
 # Tricks
 
 tcpdump -i lo0 -A port 9999

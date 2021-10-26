@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 	"gopkg.in/yaml.v2"
 	"net/url"
@@ -65,6 +66,17 @@ func Setup() {
 	if err != nil || (conf.targetURL.Scheme != "http" && conf.targetURL.Scheme != "https") {
 		_, _ = fmt.Fprintf(os.Stderr, "ERROR: '%s' is not a valid url\n", conf.TargetUrl)
 		os.Exit(2)
+	}
+
+	llevel, ok := logLevelByString[conf.LogLevel]
+	if !ok {
+		_, _ = fmt.Fprintf(os.Stderr, "\n%s is an invalid value for logLevel\n", conf.LogLevel)
+		os.Exit(2)
+	}
+	conf.log = logrus.WithFields(logrus.Fields{})
+	conf.log.Logger.SetLevel(llevel)
+	if conf.LogMode == "json" {
+		conf.log.Logger.SetFormatter(&logrus.JSONFormatter{})
 	}
 }
 
