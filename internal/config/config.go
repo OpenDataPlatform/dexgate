@@ -51,3 +51,11 @@ func GetTargetURL() *url.URL {
 func GetBindAddr() string {
 	return conf.BindAddr
 }
+
+func GetVersion() string {
+	return version
+}
+
+func GetLogLevel() string {
+	return conf.LogLevel
+}

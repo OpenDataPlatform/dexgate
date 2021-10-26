@@ -61,14 +61,14 @@ func joinURLPath(a, b *url.URL) (path, rawpath string) {
 func main() {
 	config.Setup()
 	log = config.GetLog()
-	log.Infof("Dexgate listening at '%s' to forward to '%s'", config.GetBindAddr(), config.GetTargetURL())
+	log.Infof("Dexgate %s listening at '%s' to forward to '%s' (Logleve:%s)", config.GetVersion(), config.GetBindAddr(), config.GetTargetURL(), config.GetLogLevel())
 	targetURL := config.GetTargetURL()
 	targetQuery := targetURL.RawQuery
 	director := func(req *http.Request) {
 		oldUrl := cloneURL(req.URL)
 		req.URL.Scheme = targetURL.Scheme
 		req.URL.Host = targetURL.Host
-		// Following is copyed from Director of NewSingleHostReverseProxy()
+		// Following is copied from Director of NewSingleHostReverseProxy()
 		req.URL.Path, req.URL.RawPath = joinURLPath(targetURL, req.URL)
 		if targetQuery == "" || req.URL.RawQuery == "" {
 			req.URL.RawQuery = targetQuery + req.URL.RawQuery
@@ -79,12 +79,16 @@ func main() {
 			// explicitly disable User-Agent so it's not set to default value
 			req.Header.Set("User-Agent", "")
 		}
-
 		log.Debugf("%s %s -> %s", req.Method, oldUrl.String(), req.URL.String())
 	}
-
 	reverseProxy := &httputil.ReverseProxy{Director: director}
+
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		//for name, values := range r.Header {
+		//	for _, value := range values {
+		//		log.Debugf("%s %s", name, value)
+		//	}
+		//}
 		reverseProxy.ServeHTTP(w, r)
 	})
 	log.Fatal(http.ListenAndServe(config.GetBindAddr(), nil))

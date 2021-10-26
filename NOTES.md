@@ -12,5 +12,14 @@ https://github.com/oauth2-proxy/oauth2-proxy
 
 https://www.youtube.com/watch?v=-TzLER2fX84
 
+# Tricks
+
+tcpdump -i lo0 -A port 9999
 
 
+# Spark History server
+
+To bind to localhost: export SPARK_LOCAL_IP=localhost
+See 
+- https://github.com/apache/spark/blob/master/core/src/main/scala/org/apache/spark/deploy/history/HistoryServer.scala
+- https://github.com/apache/spark/blob/master/core/src/main/scala/org/apache/spark/ui/WebUI.scala (Line 143)
