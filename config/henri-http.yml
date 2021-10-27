@@ -2,5 +2,12 @@
   logMode: dev,
   logLevel:   "DEBUG",
   bindAddr: ":9001",
-  targetUrl: "http://localhost:8102",
+  targetURL: "http://localhost:8102",
+  oidc: {
+      clientID: dexgate,
+      clientSecret: Asjhuiu8899ZERtty9K9JST,
+      issuerURL: http://127.0.0.1:5556/dex,
+      redirectURL: http://127.0.0.1:9001/callback
+  }
 }
+

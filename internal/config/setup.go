@@ -53,18 +53,18 @@ func Setup() {
 	adjustConfigString(pflag.CommandLine, &conf.LogLevel, "logLevel")
 	adjustConfigString(pflag.CommandLine, &conf.LogMode, "logMode")
 	adjustConfigString(pflag.CommandLine, &conf.BindAddr, "bindAddr")
-	adjustConfigString(pflag.CommandLine, &conf.TargetUrl, "targetUrl")
+	adjustConfigString(pflag.CommandLine, &conf.TargetURL, "targetUrl")
 	if conf.LogMode != "dev" && conf.LogMode != "json" {
 		_, _ = fmt.Fprintf(os.Stderr, "ERROR: Invalid logMode value: %s. Must be one of 'dev' or 'json'\n", conf.LogMode)
 		os.Exit(2)
 	}
-	if conf.TargetUrl == "" {
+	if conf.TargetURL == "" {
 		_, _ = fmt.Fprintf(os.Stderr, "ERROR: TargetUrl must be defined\n")
 		os.Exit(2)
 	}
-	conf.targetURL, err = url.Parse(conf.TargetUrl)
+	conf.targetURL, err = url.Parse(conf.TargetURL)
 	if err != nil || (conf.targetURL.Scheme != "http" && conf.targetURL.Scheme != "https") {
-		_, _ = fmt.Fprintf(os.Stderr, "ERROR: '%s' is not a valid url\n", conf.TargetUrl)
+		_, _ = fmt.Fprintf(os.Stderr, "ERROR: '%s' is not a valid url\n", conf.TargetURL)
 		os.Exit(2)
 	}
 

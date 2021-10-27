@@ -18,12 +18,21 @@ var logLevelByString = map[string]logrus.Level{
 // Conf Global variable
 var conf = Config{}
 
+type OidcConfig struct {
+	ClientID     string `yaml:"clientID"`     // OAuth2 client ID of this application.
+	ClientSecret string `yaml:"clientSecret"` // "OAuth2 client secret of this application."
+	IssuerURL    string `yaml:"issuerURL"`    // URL of the OpenID Connect issuer.
+	RedirectURL  string `yaml:"redirectURL"`  // Callback URL for OAuth2 responses.
+
+}
+
 type Config struct {
 	configFolder string
-	LogLevel     string `yaml:"logLevel"`  // DEBUG, ....
-	LogMode      string `yaml:"logMode"`   // Log output format: 'dev' or 'json'
-	BindAddr     string `yaml:"bindAddr"`  // The address to listen on. (default to :9001)
-	TargetUrl    string `yaml:"targetUrl"` // The URL to forward all requests
+	LogLevel     string     `yaml:"logLevel"`  // DEBUG, ....
+	LogMode      string     `yaml:"logMode"`   // Log output format: 'dev' or 'json'
+	BindAddr     string     `yaml:"bindAddr"`  // The address to listen on. (default to :9001)
+	TargetURL    string     `yaml:"targetURL"` // The URL to forward all requests
+	OidcConfig   OidcConfig `yaml:"oidc"`      // OIDC client config
 	// Transformed data
 	targetURL *url.URL
 	log       *logrus.Entry
@@ -47,4 +56,8 @@ func GetVersion() string {
 
 func GetLogLevel() string {
 	return conf.LogLevel
+}
+
+func GetOidcConfig() *OidcConfig {
+	return &conf.OidcConfig
 }
