@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strconv"
 )
 
 func loadConfig(fileName string, config *Config) error {
@@ -36,12 +37,15 @@ func Setup() {
 	var logMode string
 	var bindAddr string
 	var targetUrl string
+	var oidcDebugDefault bool = true
+	var oidcDebug *bool = &oidcDebugDefault
 
 	pflag.StringVar(&configFile, "config", "config.yml", "Configuration file")
 	pflag.StringVar(&logLevel, "logLevel", "INFO", "Log level (PANIC|FATAL|ERROR|WARN|INFO|DEBUG|TRACE)")
 	pflag.StringVar(&logMode, "logMode", "json", "Log mode: 'dev' or 'json'")
 	pflag.StringVar(&bindAddr, "bindAddr", ":9001", "The address to listen on.")
 	pflag.StringVar(&targetUrl, "targetUrl", "", "All requests will be forwarded to this URL")
+	pflag.BoolVar(oidcDebug, "oidcDebug", false, "Print all request and responses from the OpenID Connect issuer.")
 	pflag.CommandLine.SortFlags = false
 	pflag.Parse()
 
@@ -54,6 +58,7 @@ func Setup() {
 	adjustConfigString(pflag.CommandLine, &conf.LogMode, "logMode")
 	adjustConfigString(pflag.CommandLine, &conf.BindAddr, "bindAddr")
 	adjustConfigString(pflag.CommandLine, &conf.TargetURL, "targetUrl")
+	adjustConfigBool(pflag.CommandLine, &conf.OidcConfig.Debug, "oidcDebug")
 	if conf.LogMode != "dev" && conf.LogMode != "json" {
 		_, _ = fmt.Fprintf(os.Stderr, "ERROR: Invalid logMode value: %s. Must be one of 'dev' or 'json'\n", conf.LogMode)
 		os.Exit(2)
@@ -118,3 +123,20 @@ func adjustConfigString(flagSet *pflag.FlagSet, inConfig *string, param string) 
 //		}
 //	}
 //}
+
+func adjustConfigBool(flagSet *pflag.FlagSet, inConfig **bool, param string) {
+	var err error
+	var ljson bool
+	if flagSet.Lookup(param).Changed {
+		if ljson, err = flagSet.GetBool(param); err != nil {
+			_, _ = fmt.Fprintf(os.Stderr, "\nInvalid value for parameter %s\n", param)
+			os.Exit(2)
+		}
+		*inConfig = &ljson
+	} else if *inConfig == nil {
+		if ljson, err = strconv.ParseBool(flagSet.Lookup(param).DefValue); err != nil {
+			panic(err)
+		}
+		*inConfig = &ljson
+	}
+}

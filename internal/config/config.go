@@ -23,7 +23,7 @@ type OidcConfig struct {
 	ClientSecret string `yaml:"clientSecret"` // "OAuth2 client secret of this application."
 	IssuerURL    string `yaml:"issuerURL"`    // URL of the OpenID Connect issuer.
 	RedirectURL  string `yaml:"redirectURL"`  // Callback URL for OAuth2 responses.
-
+	Debug        *bool  `yaml:"debug"`        // Print all request and responses from the OpenID Connect issuer.
 }
 
 type Config struct {
