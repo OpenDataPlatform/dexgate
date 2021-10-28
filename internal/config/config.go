@@ -28,11 +28,12 @@ type OidcConfig struct {
 
 type Config struct {
 	configFolder string
-	LogLevel     string     `yaml:"logLevel"`  // DEBUG, ....
-	LogMode      string     `yaml:"logMode"`   // Log output format: 'dev' or 'json'
-	BindAddr     string     `yaml:"bindAddr"`  // The address to listen on. (default to :9001)
-	TargetURL    string     `yaml:"targetURL"` // The URL to forward all requests
-	OidcConfig   OidcConfig `yaml:"oidc"`      // OIDC client config
+	LogLevel     string     `yaml:"logLevel"`     // DEBUG, ....
+	LogMode      string     `yaml:"logMode"`      // Log output format: 'dev' or 'json'
+	BindAddr     string     `yaml:"bindAddr"`     // The address to listen on. (default to :9001)
+	TargetURL    string     `yaml:"targetURL"`    // The URL to forward all requests
+	OidcConfig   OidcConfig `yaml:"oidc"`         // OIDC client config
+	Passthroughs []string   `yaml:"passthroughs"` // Paths pattern to forward without authentication (See http.ServeMux for path definition)
 	// Transformed data
 	targetURL *url.URL
 	log       *logrus.Entry
@@ -60,4 +61,8 @@ func GetLogLevel() string {
 
 func GetOidcConfig() *OidcConfig {
 	return &conf.OidcConfig
+}
+
+func GetPassthroughs() []string {
+	return conf.Passthroughs
 }

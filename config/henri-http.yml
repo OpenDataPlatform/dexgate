@@ -3,6 +3,7 @@
   logLevel:   "DEBUG",
   bindAddr: ":9001",
   targetURL: "http://localhost:8102",
+  passthroughs: [ "/favicon.ico" ],
   oidc: {
       clientID: dexgate,
       clientSecret: Asjhuiu8899ZERtty9K9JST,

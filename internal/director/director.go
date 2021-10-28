@@ -72,6 +72,6 @@ func NewDirector(targetURL *url.URL) func(req *http.Request) {
 			// explicitly disable User-Agent so it's not set to default value
 			req.Header.Set("User-Agent", "")
 		}
-		log.Debugf("%s %s -> %s", req.Method, oldUrl.String(), req.URL.String())
+		log.Debugf("%s %s -> %s (Reverse proxy)", req.Method, oldUrl.String(), req.URL.String())
 	}
 }
