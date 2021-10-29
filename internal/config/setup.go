@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 func loadConfig(fileName string, config *Config) error {
@@ -38,6 +39,8 @@ func Setup() {
 	var targetUrl string
 	var oidcDebug bool
 	var tokenDisplay bool
+	var idleTimeout string
+	var sessionLifetime string
 
 	pflag.StringVar(&configFile, "config", "config.yml", "Configuration file")
 	pflag.StringVar(&logLevel, "logLevel", "INFO", "Log level (PANIC|FATAL|ERROR|WARN|INFO|DEBUG|TRACE)")
@@ -46,43 +49,82 @@ func Setup() {
 	pflag.StringVar(&targetUrl, "targetUrl", "", "All requests will be forwarded to this URL")
 	pflag.BoolVar(&oidcDebug, "oidcDebug", false, "Print all request and responses from the OpenID Connect issuer.")
 	pflag.BoolVar(&tokenDisplay, "tokenDisplay", false, "Display an intermediate token page after login (Debugging only).")
+	pflag.StringVar(&idleTimeout, "idleTimeout", "15m", "The maximum length of time a session can be inactive before being expired")
+	pflag.StringVar(&sessionLifetime, "sessionLifetime", "6h", "The absolute maximum length of time that a session is valid.")
+
 	pflag.CommandLine.SortFlags = false
 	pflag.Parse()
 
-	err := loadConfig(configFile, &conf)
+	err := loadConfig(configFile, &Conf)
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "ERROR: Unable to load config file: %v\n", err)
 		os.Exit(2)
 	}
-	adjustConfigString(pflag.CommandLine, &conf.LogLevel, "logLevel")
-	adjustConfigString(pflag.CommandLine, &conf.LogMode, "logMode")
-	adjustConfigString(pflag.CommandLine, &conf.BindAddr, "bindAddr")
-	adjustConfigString(pflag.CommandLine, &conf.TargetURL, "targetUrl")
-	adjustConfigBool(pflag.CommandLine, &conf.OidcConfig.Debug, "oidcDebug")
-	if conf.LogMode != "dev" && conf.LogMode != "json" {
-		_, _ = fmt.Fprintf(os.Stderr, "ERROR: Invalid logMode value: %s. Must be one of 'dev' or 'json'\n", conf.LogMode)
+	adjustConfigString(pflag.CommandLine, &Conf.LogLevel, "logLevel")
+	adjustConfigString(pflag.CommandLine, &Conf.LogMode, "logMode")
+	adjustConfigString(pflag.CommandLine, &Conf.BindAddr, "bindAddr")
+	adjustConfigString(pflag.CommandLine, &Conf.TargetURL, "targetUrl")
+	adjustConfigBool(pflag.CommandLine, &Conf.OidcConfig.Debug, "oidcDebug")
+	adjustConfigBool(pflag.CommandLine, &Conf.TokenDisplay, "tokenDisplay")
+	adjustConfigString(pflag.CommandLine, &Conf.SessionConfig.IdleTimeout, "idleTimeout")
+	adjustConfigString(pflag.CommandLine, &Conf.SessionConfig.Lifetime, "sessionLifetime")
+
+	// -----------------------------------Handle logging  stuff
+	if Conf.LogMode != "dev" && Conf.LogMode != "json" {
+		_, _ = fmt.Fprintf(os.Stderr, "ERROR: Invalid logMode value: %s. Must be one of 'dev' or 'json'\n", Conf.LogMode)
 		os.Exit(2)
 	}
-	if conf.TargetURL == "" {
-		_, _ = fmt.Fprintf(os.Stderr, "ERROR: TargetUrl must be defined\n")
+	llevel, ok := logLevelByString[Conf.LogLevel]
+	if !ok {
+		_, _ = fmt.Fprintf(os.Stderr, "\n%s is an invalid value for logLevel\n", Conf.LogLevel)
 		os.Exit(2)
 	}
-	conf.targetURL, err = url.Parse(conf.TargetURL)
-	if err != nil || (conf.targetURL.Scheme != "http" && conf.targetURL.Scheme != "https") {
-		_, _ = fmt.Fprintf(os.Stderr, "ERROR: '%s' is not a valid url\n", conf.TargetURL)
-		os.Exit(2)
+	Log = logrus.WithFields(logrus.Fields{})
+	Log.Logger.SetLevel(llevel)
+	if Conf.LogMode == "json" {
+		Log.Logger.SetFormatter(&logrus.JSONFormatter{})
 	}
 
-	llevel, ok := logLevelByString[conf.LogLevel]
-	if !ok {
-		_, _ = fmt.Fprintf(os.Stderr, "\n%s is an invalid value for logLevel\n", conf.LogLevel)
+	// ------------------------------ TargetURL handling
+	if Conf.TargetURL == "" {
+		missingParameter("TargetURL")
+	}
+
+	TargetURL, err = url.Parse(Conf.TargetURL)
+	if err != nil || (TargetURL.Scheme != "http" && TargetURL.Scheme != "https") {
+		_, _ = fmt.Fprintf(os.Stderr, "ERROR: '%s' is not a valid url\n", Conf.TargetURL)
 		os.Exit(2)
 	}
-	conf.log = logrus.WithFields(logrus.Fields{})
-	conf.log.Logger.SetLevel(llevel)
-	if conf.LogMode == "json" {
-		conf.log.Logger.SetFormatter(&logrus.JSONFormatter{})
+	// ------------------------- Handle Oidc config stuff
+	if Conf.OidcConfig.ClientID == "" {
+		missingParameter("oidcConfig.clientID")
 	}
+	if Conf.OidcConfig.ClientSecret == "" {
+		missingParameter("oidcConfig.clientSecret")
+	}
+	if Conf.OidcConfig.IssuerURL == "" {
+		missingParameter("oidcConfig.issuerURL")
+	}
+	if Conf.OidcConfig.RedirectURL == "" {
+		missingParameter("oidcConfig.redirectURL")
+	}
+
+	// ----------------------- Session handling
+	IdleTimeout, err = time.ParseDuration(Conf.SessionConfig.IdleTimeout)
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "ERROR: '%s' is not a valid Duration for 'sessionConfig.idleTimeout' parameter\n", Conf.SessionConfig.IdleTimeout)
+		os.Exit(2)
+	}
+	SessionLifetime, err = time.ParseDuration(Conf.SessionConfig.Lifetime)
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "ERROR: '%s' is not a valid Duration for 'sessionConfig.lifetime' parameter\n", Conf.SessionConfig.Lifetime)
+		os.Exit(2)
+	}
+}
+
+func missingParameter(param string) {
+	_, _ = fmt.Fprintf(os.Stderr, "ERROR: '%s' parameter must be defined in config file\n", param)
+	os.Exit(2)
 }
 
 //

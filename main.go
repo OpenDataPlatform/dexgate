@@ -15,12 +15,9 @@ import (
 
 /*
 TODO
-- Page /dg_info
-- Make session duration parameter configurable
 - implements allowed email/groups lists
 - Enable SSL on input
 - Enable SSL/CA on client
-- Remove user approval for scope (Dex config ?)
 - Kube integration
 - Perform retry to allow late Dex startup (Or let K8S handle this case)
 - Documentation
@@ -37,35 +34,39 @@ var log *logrus.Entry
 
 func main() {
 	config.Setup()
-	log = config.GetLog()
-	log.Infof("Dexgate %s listening at '%s' to forward to '%s' (Logleve:%s)", config.GetVersion(), config.GetBindAddr(), config.GetTargetURL(), config.GetLogLevel())
+	log = config.Log
+	log.Infof("Dexgate %s listening at '%s' to forward to '%s' (Logleve:%s)", config.Version, config.Conf.BindAddr, config.Conf.TargetURL, config.Conf.LogLevel)
+	log.Infof("Session will expire after %s of inactivity and will not be longer than %s", config.IdleTimeout.String(), config.SessionLifetime.String())
 
 	sessionManager := scs.New()
 	sessionManager.Cookie.Name = "dg_session"
+	sessionManager.IdleTimeout = config.IdleTimeout
+	sessionManager.Lifetime = config.SessionLifetime
 
-	reverseProxy := &httputil.ReverseProxy{Director: director.NewDirector(config.GetTargetURL())}
+	reverseProxy := &httputil.ReverseProxy{Director: director.NewDirector(config.TargetURL)}
 
-	oidcApp, err := oidcapp.NewOidcApp(config.GetOidcConfig())
+	oidcApp, err := oidcapp.NewOidcApp(&config.Conf.OidcConfig)
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "ERROR: Unable to instanciate OIDC subsystem:%v'\n", err)
 		os.Exit(2)
 	}
 	mux := http.NewServeMux()
 	mux.Handle("/dg_logout", lougoutHandler(sessionManager))
+	mux.Handle("/dg_info", infoHandler(sessionManager))
 	mux.Handle("/dg_callback", callbackHandler(sessionManager, oidcApp))
-	for _, path := range config.GetPassthroughs() {
+	for _, path := range config.Conf.Passthroughs {
 		log.Infof("Will set passthrough for %s", path)
 		mux.Handle(path, passthroughHandler(reverseProxy))
 	}
 	mux.Handle("/", mainHandler(sessionManager, reverseProxy, oidcApp))
-	log.Fatal(http.ListenAndServe(config.GetBindAddr(), sessionManager.LoadAndSave(mux)))
+	log.Fatal(http.ListenAndServe(config.Conf.BindAddr, sessionManager.LoadAndSave(mux)))
 }
 
 // Key for session object
 const (
-	landingURLKey = "landingURL"
-	tokenKey      = "token"
-	claimKey      = "claim"
+	landingURLKey  = "landingURL"
+	accessTokenKey = "accessToken"
+	claimKey       = "claim"
 )
 
 func passthroughHandler(reverseProxy *httputil.ReverseProxy) http.Handler {
@@ -82,7 +83,7 @@ func passthroughHandler(reverseProxy *httputil.ReverseProxy) http.Handler {
 
 func mainHandler(sessionManager *scs.SessionManager, reverseProxy *httputil.ReverseProxy, oidcApp *oidcapp.OidcApp) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		token := sessionManager.GetString(r.Context(), tokenKey)
+		token := sessionManager.GetString(r.Context(), accessTokenKey)
 		if token == "" {
 			// Fresh session. Must enter login process
 			lurl := oidcApp.NewLoginURL()
@@ -109,13 +110,14 @@ func callbackHandler(sessionManager *scs.SessionManager, oidcApp *oidcapp.OidcAp
 			return
 		}
 		//log.Infof("claims:%v", tokenData.Claims)
-		sessionManager.Put(r.Context(), tokenKey, tokenData.AccessToken)
+		sessionManager.Put(r.Context(), accessTokenKey, tokenData.AccessToken)
 		sessionManager.Put(r.Context(), claimKey, tokenData.Claims)
 		landingURL := sessionManager.GetString(r.Context(), landingURLKey)
-		if config.IsTokenDisplay() {
+		if config.Conf.TokenDisplay {
 			log.Debugf("Displaying token page (landingURL:%s)", landingURL)
 			templates.RenderToken(w, *tokenData, landingURL)
 		} else {
+			log.Debugf("Redirecting to landingURL:%s)", landingURL)
 			http.Redirect(w, r, landingURL, http.StatusSeeOther)
 		}
 	})
@@ -123,8 +125,16 @@ func callbackHandler(sessionManager *scs.SessionManager, oidcApp *oidcapp.OidcAp
 
 func lougoutHandler(sessionManager *scs.SessionManager) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		landingURL := sessionManager.Get(r.Context(), landingURLKey).(string)
+		landingURL := sessionManager.GetString(r.Context(), landingURLKey)
 		_ = sessionManager.Destroy(r.Context())
 		templates.RenderLogout(w, landingURL)
+	})
+}
+
+func infoHandler(sessionManager *scs.SessionManager) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		accessToken := sessionManager.GetString(r.Context(), accessTokenKey)
+		claims := sessionManager.GetString(r.Context(), claimKey)
+		templates.RenderInfo(w, accessToken, claims)
 	})
 }

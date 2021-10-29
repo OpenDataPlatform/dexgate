@@ -3,6 +3,7 @@ package config
 import (
 	"github.com/sirupsen/logrus"
 	"net/url"
+	"time"
 )
 
 var logLevelByString = map[string]logrus.Level{
@@ -15,8 +16,14 @@ var logLevelByString = map[string]logrus.Level{
 	"TRACE": logrus.TraceLevel,
 }
 
-// Conf Global variable
-var conf = Config{}
+// Exported globale variables
+var (
+	Conf            Config
+	TargetURL       *url.URL
+	Log             *logrus.Entry
+	IdleTimeout     time.Duration
+	SessionLifetime time.Duration
+)
 
 type OidcConfig struct {
 	ClientID     string `yaml:"clientID"`     // OAuth2 client ID of this application.
@@ -26,48 +33,19 @@ type OidcConfig struct {
 	Debug        bool   `yaml:"debug"`        // Print all request and responses from the OpenID Connect issuer.
 }
 
+type SessionConfig struct {
+	IdleTimeout string `yaml:"idleTimeout"` // The maximum length of time a session can be inactive before being expired
+	Lifetime    string `yaml:"lifetime"`    // The absolute maximum length of time that a session is valid.
+}
+
 type Config struct {
-	configFolder string
-	LogLevel     string     `yaml:"logLevel"`     // DEBUG, ....
-	LogMode      string     `yaml:"logMode"`      // Log output format: 'dev' or 'json'
-	BindAddr     string     `yaml:"bindAddr"`     // The address to listen on. (default to :9001)
-	TargetURL    string     `yaml:"targetURL"`    // The URL to forward all requests
-	OidcConfig   OidcConfig `yaml:"oidc"`         // OIDC client config
-	Passthroughs []string   `yaml:"passthroughs"` // Paths pattern to forward without authentication (See http.ServeMux for path definition)
-	TokenDisplay bool       `yaml:"tokenDisplay"` // Display an intermediate token page after login (Debugging only)
-	// Transformed data
-	targetURL *url.URL
-	log       *logrus.Entry
-}
-
-func GetLog() *logrus.Entry {
-	return conf.log
-}
-
-func GetTargetURL() *url.URL {
-	return conf.targetURL
-}
-
-func GetBindAddr() string {
-	return conf.BindAddr
-}
-
-func GetVersion() string {
-	return version
-}
-
-func GetLogLevel() string {
-	return conf.LogLevel
-}
-
-func GetOidcConfig() *OidcConfig {
-	return &conf.OidcConfig
-}
-
-func GetPassthroughs() []string {
-	return conf.Passthroughs
-}
-
-func IsTokenDisplay() bool {
-	return conf.TokenDisplay
+	configFolder  string
+	LogLevel      string        `yaml:"logLevel"`      // INFO,DEBUG, ....
+	LogMode       string        `yaml:"logMode"`       // Log output format: 'dev' or 'json'
+	BindAddr      string        `yaml:"bindAddr"`      // The address to listen on. (default to :9001)
+	TargetURL     string        `yaml:"targetURL"`     // The URL to forward all requests
+	OidcConfig    OidcConfig    `yaml:"oidc"`          // OIDC client config
+	Passthroughs  []string      `yaml:"passthroughs"`  // Paths pattern to forward without authentication (See http.ServeMux for path definition)
+	TokenDisplay  bool          `yaml:"tokenDisplay"`  // Display an intermediate token page after login (Debugging only)
+	SessionConfig SessionConfig `yaml:"sessionConfig"` // Web session parameters
 }

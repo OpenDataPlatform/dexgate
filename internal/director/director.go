@@ -55,7 +55,7 @@ func joinURLPath(a, b *url.URL) (path, rawpath string) {
 }
 
 func NewDirector(targetURL *url.URL) func(req *http.Request) {
-	log := config.GetLog()
+	log := config.Log
 	targetQuery := targetURL.RawQuery
 	return func(req *http.Request) {
 		oldUrl := cloneURL(req.URL)

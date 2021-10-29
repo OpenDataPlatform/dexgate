@@ -15,7 +15,7 @@ func renderTemplate(w http.ResponseWriter, tmpl *template.Template, data interfa
 	switch err := err.(type) {
 	case *template.Error:
 		// An ExecError guarantees that Execute has not written to the underlying reader.
-		config.GetLog().Errorf("Error rendering template %s: %s", tmpl.Name(), err)
+		config.Log.Errorf("Error rendering template %s: %s", tmpl.Name(), err)
 
 		// TODO(ericchiang): replace with better internal server error.
 		http.Error(w, "Internal server error", http.StatusInternalServerError)

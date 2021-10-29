@@ -11,11 +11,12 @@ type debugTransport struct {
 }
 
 func (d debugTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	log := config.Log
 	reqDump, err := httputil.DumpRequest(req, true)
 	if err != nil {
 		return nil, err
 	}
-	config.GetLog().Infof("%s", reqDump)
+	log.Infof("%s", reqDump)
 
 	resp, err := d.t.RoundTrip(req)
 	if err != nil {
@@ -27,6 +28,6 @@ func (d debugTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 		resp.Body.Close()
 		return nil, err
 	}
-	config.GetLog().Infof("%s", respDump)
+	log.Infof("%s", respDump)
 	return resp, nil
 }
