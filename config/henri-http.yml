@@ -8,7 +8,8 @@
       clientID: dexgate,
       clientSecret: Asjhuiu8899ZERtty9K9JST,
       issuerURL: http://127.0.0.1:5556/dex,
-      redirectURL: http://127.0.0.1:9001/callback
+      redirectURL: http://localhost:9001/dg_callback,
+      debug: false
   }
 }
 

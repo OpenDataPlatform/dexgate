@@ -28,7 +28,7 @@ func NewOidcApp(config *config.OidcConfig) (*OidcApp, error) {
 	// We build a specific http.client, for
 	// - Allowing some Debug on exchange
 	// - Setup SSL connection (TODO)
-	if *config.Debug {
+	if config.Debug {
 		if app.client == nil {
 			app.client = &http.Client{
 				Transport: debugTransport{http.DefaultTransport},

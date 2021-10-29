@@ -22,8 +22,8 @@ type OidcConfig struct {
 	ClientID     string `yaml:"clientID"`     // OAuth2 client ID of this application.
 	ClientSecret string `yaml:"clientSecret"` // "OAuth2 client secret of this application."
 	IssuerURL    string `yaml:"issuerURL"`    // URL of the OpenID Connect issuer.
-	RedirectURL  string `yaml:"redirectURL"`  // Callback URL for OAuth2 responses.
-	Debug        *bool  `yaml:"debug"`        // Print all request and responses from the OpenID Connect issuer.
+	RedirectURL  string `yaml:"redirectURL"`  // Callback URL for OAuth2 responses. Domain must be same as initial call, for cookies to be shared.
+	Debug        bool   `yaml:"debug"`        // Print all request and responses from the OpenID Connect issuer.
 }
 
 type Config struct {
@@ -34,6 +34,7 @@ type Config struct {
 	TargetURL    string     `yaml:"targetURL"`    // The URL to forward all requests
 	OidcConfig   OidcConfig `yaml:"oidc"`         // OIDC client config
 	Passthroughs []string   `yaml:"passthroughs"` // Paths pattern to forward without authentication (See http.ServeMux for path definition)
+	TokenDisplay bool       `yaml:"tokenDisplay"` // Display an intermediate token page after login (Debugging only)
 	// Transformed data
 	targetURL *url.URL
 	log       *logrus.Entry
@@ -65,4 +66,8 @@ func GetOidcConfig() *OidcConfig {
 
 func GetPassthroughs() []string {
 	return conf.Passthroughs
+}
+
+func IsTokenDisplay() bool {
+	return conf.TokenDisplay
 }

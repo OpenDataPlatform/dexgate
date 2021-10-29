@@ -8,7 +8,6 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"strconv"
 )
 
 func loadConfig(fileName string, config *Config) error {
@@ -37,15 +36,16 @@ func Setup() {
 	var logMode string
 	var bindAddr string
 	var targetUrl string
-	var oidcDebugDefault bool = true
-	var oidcDebug *bool = &oidcDebugDefault
+	var oidcDebug bool
+	var tokenDisplay bool
 
 	pflag.StringVar(&configFile, "config", "config.yml", "Configuration file")
 	pflag.StringVar(&logLevel, "logLevel", "INFO", "Log level (PANIC|FATAL|ERROR|WARN|INFO|DEBUG|TRACE)")
 	pflag.StringVar(&logMode, "logMode", "json", "Log mode: 'dev' or 'json'")
 	pflag.StringVar(&bindAddr, "bindAddr", ":9001", "The address to listen on.")
 	pflag.StringVar(&targetUrl, "targetUrl", "", "All requests will be forwarded to this URL")
-	pflag.BoolVar(oidcDebug, "oidcDebug", false, "Print all request and responses from the OpenID Connect issuer.")
+	pflag.BoolVar(&oidcDebug, "oidcDebug", false, "Print all request and responses from the OpenID Connect issuer.")
+	pflag.BoolVar(&tokenDisplay, "tokenDisplay", false, "Display an intermediate token page after login (Debugging only).")
 	pflag.CommandLine.SortFlags = false
 	pflag.Parse()
 
@@ -124,7 +124,24 @@ func adjustConfigString(flagSet *pflag.FlagSet, inConfig *string, param string) 
 //	}
 //}
 
-func adjustConfigBool(flagSet *pflag.FlagSet, inConfig **bool, param string) {
+//func adjustConfigBool(flagSet *pflag.FlagSet, inConfig **bool, param string) {
+//	var err error
+//	var ljson bool
+//	if flagSet.Lookup(param).Changed {
+//		if ljson, err = flagSet.GetBool(param); err != nil {
+//			_, _ = fmt.Fprintf(os.Stderr, "\nInvalid value for parameter %s\n", param)
+//			os.Exit(2)
+//		}
+//		*inConfig = &ljson
+//	} else if *inConfig == nil {
+//		if ljson, err = strconv.ParseBool(flagSet.Lookup(param).DefValue); err != nil {
+//			panic(err)
+//		}
+//		*inConfig = &ljson
+//	}
+//}
+
+func adjustConfigBool(flagSet *pflag.FlagSet, inConfig *bool, param string) {
 	var err error
 	var ljson bool
 	if flagSet.Lookup(param).Changed {
@@ -132,11 +149,6 @@ func adjustConfigBool(flagSet *pflag.FlagSet, inConfig **bool, param string) {
 			_, _ = fmt.Fprintf(os.Stderr, "\nInvalid value for parameter %s\n", param)
 			os.Exit(2)
 		}
-		*inConfig = &ljson
-	} else if *inConfig == nil {
-		if ljson, err = strconv.ParseBool(flagSet.Lookup(param).DefValue); err != nil {
-			panic(err)
-		}
-		*inConfig = &ljson
+		*inConfig = ljson
 	}
 }
