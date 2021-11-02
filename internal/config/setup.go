@@ -41,6 +41,7 @@ func Setup() {
 	var tokenDisplay bool
 	var idleTimeout string
 	var sessionLifetime string
+	var userConfigFile string
 
 	pflag.StringVar(&configFile, "config", "config.yml", "Configuration file")
 	pflag.StringVar(&logLevel, "logLevel", "INFO", "Log level (PANIC|FATAL|ERROR|WARN|INFO|DEBUG|TRACE)")
@@ -51,6 +52,7 @@ func Setup() {
 	pflag.BoolVar(&tokenDisplay, "tokenDisplay", false, "Display an intermediate token page after login (Debugging only).")
 	pflag.StringVar(&idleTimeout, "idleTimeout", "15m", "The maximum length of time a session can be inactive before being expired")
 	pflag.StringVar(&sessionLifetime, "sessionLifetime", "6h", "The absolute maximum length of time that a session is valid.")
+	pflag.StringVar(&userConfigFile, "userConfigFile", "users.yml", "Users / Groups permission file.")
 
 	pflag.CommandLine.SortFlags = false
 	pflag.Parse()
@@ -68,6 +70,7 @@ func Setup() {
 	adjustConfigBool(pflag.CommandLine, &Conf.TokenDisplay, "tokenDisplay")
 	adjustConfigString(pflag.CommandLine, &Conf.SessionConfig.IdleTimeout, "idleTimeout")
 	adjustConfigString(pflag.CommandLine, &Conf.SessionConfig.Lifetime, "sessionLifetime")
+	adjustConfigString(pflag.CommandLine, &Conf.UserConfigFile, "userConfigFile")
 
 	// -----------------------------------Handle logging  stuff
 	if Conf.LogMode != "dev" && Conf.LogMode != "json" {
@@ -87,7 +90,7 @@ func Setup() {
 
 	// ------------------------------ TargetURL handling
 	if Conf.TargetURL == "" {
-		missingParameter("TargetURL")
+		missingParameter("targetURL")
 	}
 
 	TargetURL, err = url.Parse(Conf.TargetURL)
@@ -120,6 +123,11 @@ func Setup() {
 		_, _ = fmt.Fprintf(os.Stderr, "ERROR: '%s' is not a valid Duration for 'sessionConfig.lifetime' parameter\n", Conf.SessionConfig.Lifetime)
 		os.Exit(2)
 	}
+	if Conf.UserConfigFile == "" {
+		missingParameter("userConfigFile")
+	}
+	// Set relative to main config file
+	adjustPath(Conf.configFolder, &Conf.UserConfigFile)
 }
 
 func missingParameter(param string) {
@@ -127,15 +135,15 @@ func missingParameter(param string) {
 	os.Exit(2)
 }
 
-//
-//func adjustPath(baseFolder string, path *string) {
-//	if *path != "" {
-//		if !filepath.IsAbs(*path) {
-//			*path = filepath.Join(baseFolder, *path)
-//		}
-//		*path = filepath.Clean(*path)
-//	}
-//}
+func adjustPath(baseFolder string, path *string) {
+	if *path != "" {
+		if !filepath.IsAbs(*path) {
+			*path = filepath.Join(baseFolder, *path)
+		}
+		*path = filepath.Clean(*path)
+	}
+}
+
 // For all adjustConfigXxx(), we:
 // - panic when error is internal
 // - Display a message and exit(2) when error is from usage

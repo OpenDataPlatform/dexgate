@@ -5,6 +5,7 @@ import (
 	"dexgate/internal/director"
 	"dexgate/internal/oidcapp"
 	"dexgate/internal/templates"
+	"dexgate/internal/users"
 	"fmt"
 	"github.com/alexedwards/scs/v2"
 	"github.com/sirupsen/logrus"
@@ -50,10 +51,16 @@ func main() {
 		_, _ = fmt.Fprintf(os.Stderr, "ERROR: Unable to instanciate OIDC subsystem:%v'\n", err)
 		os.Exit(2)
 	}
+	userValidator, err := users.NewUserValidator(config.Conf.UserConfigFile)
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "ERROR: Unable to load '%s': %v\n", config.Conf.UserConfigFile, err)
+		os.Exit(2)
+	}
 	mux := http.NewServeMux()
 	mux.Handle("/dg_logout", lougoutHandler(sessionManager))
 	mux.Handle("/dg_info", infoHandler(sessionManager))
-	mux.Handle("/dg_callback", callbackHandler(sessionManager, oidcApp))
+	mux.Handle("/dg_unallowed", unallowedHandler(sessionManager))
+	mux.Handle("/dg_callback", callbackHandler(sessionManager, oidcApp, userValidator))
 	for _, path := range config.Conf.Passthroughs {
 		log.Infof("Will set passthrough for %s", path)
 		mux.Handle(path, passthroughHandler(reverseProxy))
@@ -97,7 +104,7 @@ func mainHandler(sessionManager *scs.SessionManager, reverseProxy *httputil.Reve
 	})
 }
 
-func callbackHandler(sessionManager *scs.SessionManager, oidcApp *oidcapp.OidcApp) http.Handler {
+func callbackHandler(sessionManager *scs.SessionManager, oidcApp *oidcapp.OidcApp, userValidator users.UserValidator) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		code, errMsg := oidcApp.CheckCallbackRequest(r)
 		if errMsg != "" {
@@ -109,16 +116,27 @@ func callbackHandler(sessionManager *scs.SessionManager, oidcApp *oidcapp.OidcAp
 			http.Error(w, errMsg, http.StatusInternalServerError)
 			return
 		}
-		//log.Infof("claims:%v", tokenData.Claims)
-		sessionManager.Put(r.Context(), accessTokenKey, tokenData.AccessToken)
-		sessionManager.Put(r.Context(), claimKey, tokenData.Claims)
+		log.Debugf("claims:%v", tokenData.Claims)
+		logged, err := userValidator.ValidateUser(tokenData.Claims)
+		if err != nil {
+			log.Errorf("Unable to decode claim '%s': %v", tokenData.Claims, err)
+			http.Error(w, fmt.Sprintf("Unable to decode claim '%s'", tokenData.Claims), http.StatusInternalServerError)
+			return
+		}
 		landingURL := sessionManager.GetString(r.Context(), landingURLKey)
-		if config.Conf.TokenDisplay {
-			log.Debugf("Displaying token page (landingURL:%s)", landingURL)
-			templates.RenderToken(w, *tokenData, landingURL)
+		if !logged {
+			// We can reder the unallowed template here. But we prefer to issue a redirect, to clean address bar from redirect callback url.
+			http.Redirect(w, r, "dg_unallowed", http.StatusSeeOther)
 		} else {
-			log.Debugf("Redirecting to landingURL:%s)", landingURL)
-			http.Redirect(w, r, landingURL, http.StatusSeeOther)
+			sessionManager.Put(r.Context(), accessTokenKey, tokenData.AccessToken)
+			sessionManager.Put(r.Context(), claimKey, tokenData.Claims)
+			if config.Conf.TokenDisplay {
+				log.Debugf("Displaying token page (landingURL:%s)", landingURL)
+				templates.RenderToken(w, tokenData, landingURL)
+			} else {
+				log.Debugf("Redirecting to landingURL:%s)", landingURL)
+				http.Redirect(w, r, landingURL, http.StatusSeeOther)
+			}
 		}
 	})
 }
@@ -136,5 +154,12 @@ func infoHandler(sessionManager *scs.SessionManager) http.Handler {
 		accessToken := sessionManager.GetString(r.Context(), accessTokenKey)
 		claims := sessionManager.GetString(r.Context(), claimKey)
 		templates.RenderInfo(w, accessToken, claims)
+	})
+}
+
+func unallowedHandler(sessionManager *scs.SessionManager) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		landingURL := sessionManager.GetString(r.Context(), landingURLKey)
+		templates.RenderUnallowed(w, landingURL)
 	})
 }

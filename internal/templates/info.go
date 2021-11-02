@@ -8,7 +8,7 @@ import (
 	"net/http"
 )
 
-var infoTmpl = template.Must(template.New("token.html").Parse(`<html>
+var infoTmpl = template.Must(template.New("info.html").Parse(`<html>
   <head>
     <style>
 /* make pre wrap */

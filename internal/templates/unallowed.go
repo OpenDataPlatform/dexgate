@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-var logoutTmpl = template.Must(template.New("logout.html").Parse(`<html>
+var unallowedTmpl = template.Must(template.New("unallowed.html").Parse(`<html>
   <head>
     <style>
 /* make pre wrap */
@@ -19,19 +19,19 @@ pre {
     </style>
   </head>
   <body>
-	<p>You are now logged out</p>
-	<p>Bye!</p>
-	<input type="button" onclick="location.href='{{ .LandingURL }}';" value="Re-enter.... ">
+	<h2>Unallowed !</h2>
+	<p>Your are not allowed to access this ressource.</p>
+	<p>Refer to your system administrator</p>
   </body>
 </html>
 `))
 
-type logoutTmplData struct {
+type unallowedTmplData struct {
 	LandingURL string
 }
 
-func RenderLogout(w http.ResponseWriter, landingURL string) {
-	renderTemplate(w, logoutTmpl, logoutTmplData{
+func RenderUnallowed(w http.ResponseWriter, landingURL string) {
+	renderTemplate(w, unallowedTmpl, tokenTmplData{
 		LandingURL: landingURL,
 	})
 }

@@ -39,13 +39,14 @@ type SessionConfig struct {
 }
 
 type Config struct {
-	configFolder  string
-	LogLevel      string        `yaml:"logLevel"`      // INFO,DEBUG, ....
-	LogMode       string        `yaml:"logMode"`       // Log output format: 'dev' or 'json'
-	BindAddr      string        `yaml:"bindAddr"`      // The address to listen on. (default to :9001)
-	TargetURL     string        `yaml:"targetURL"`     // The URL to forward all requests
-	OidcConfig    OidcConfig    `yaml:"oidc"`          // OIDC client config
-	Passthroughs  []string      `yaml:"passthroughs"`  // Paths pattern to forward without authentication (See http.ServeMux for path definition)
-	TokenDisplay  bool          `yaml:"tokenDisplay"`  // Display an intermediate token page after login (Debugging only)
-	SessionConfig SessionConfig `yaml:"sessionConfig"` // Web session parameters
+	configFolder   string
+	LogLevel       string        `yaml:"logLevel"`       // INFO,DEBUG, ....
+	LogMode        string        `yaml:"logMode"`        // Log output format: 'dev' or 'json'
+	BindAddr       string        `yaml:"bindAddr"`       // The address to listen on. (default to :9001)
+	TargetURL      string        `yaml:"targetURL"`      // The URL to forward all requests
+	OidcConfig     OidcConfig    `yaml:"oidc"`           // OIDC client config
+	Passthroughs   []string      `yaml:"passthroughs"`   // Paths pattern to forward without authentication (See http.ServeMux for path definition)
+	TokenDisplay   bool          `yaml:"tokenDisplay"`   // Display an intermediate token page after login (Debugging only)
+	SessionConfig  SessionConfig `yaml:"sessionConfig"`  // Web session parameters
+	UserConfigFile string        `yaml:"userConfigFile"` // File hosting allowed users/groups
 }

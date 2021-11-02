@@ -4,6 +4,7 @@
   bindAddr: ":9999",
   targetURL: "http://n0.kspray2:30999",
   passthroughs: [ "/favicon.ico" ],
+  tokenDisplay: False,
   oidc: {
     clientID: dexgate,
     clientSecret: Asjhuiu8899ZERtty9K9JST,

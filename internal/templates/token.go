@@ -40,14 +40,14 @@ type tokenTmplData struct {
 	LandingURL string
 }
 
-func RenderToken(w http.ResponseWriter, tokenData oidcapp.TokenData, landingURL string) {
+func RenderToken(w http.ResponseWriter, tokenData *oidcapp.TokenData, landingURL string) {
 	buff := new(bytes.Buffer)
 	if err := json.Indent(buff, []byte(tokenData.Claims), "", "  "); err != nil {
 		http.Error(w, fmt.Sprintf("error indenting ID token claims: %v", err), http.StatusInternalServerError)
 		return
 	}
 	renderTemplate(w, tokenTmpl, tokenTmplData{
-		TokenData:  tokenData,
+		TokenData:  *tokenData,
 		Claims:     buff.String(),
 		LandingURL: landingURL,
 	})

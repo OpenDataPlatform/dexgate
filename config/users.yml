@@ -1,0 +1,6 @@
+
+allowedUsers:
+  - "Jules TESTEUR"
+
+allowedGroups:
+  - devs
