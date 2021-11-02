@@ -4,3 +4,6 @@ allowedUsers:
 
 allowedGroups:
   - devs
+
+allowedEmails:
+  - "jc@lotus.com"

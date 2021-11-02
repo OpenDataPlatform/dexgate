@@ -33,6 +33,7 @@ func NewUserValidator(configFileName string) (UserValidator, error) {
 		config: uc,
 		users:  make(map[string]bool),
 		groups: make(map[string]bool),
+		emails: make(map[string]bool),
 	}
 	for _, user := range uc.AllowedUsers {
 		validator.users[user] = true
