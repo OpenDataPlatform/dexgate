@@ -6,20 +6,39 @@ import (
 	"os"
 )
 
-type UserValidator interface {
+type UserFilter interface {
 	ValidateUser(claim string) (bool, error)
 }
 
-type UserValidatorImpl struct {
+type userFilterImpl struct {
+	validator *userValidator
+}
+
+func (this *userFilterImpl) ValidateUser(claim string) (bool, error) {
+	return this.validator.validateUser(claim)
+}
+
+func NewUserFilter() (UserFilter, error) {
+	validator, err := newUserValidator()
+	if err != nil {
+		return nil, err
+	} else {
+		return &userFilterImpl{
+			validator: validator,
+		}, nil
+	}
+}
+
+type userValidator struct {
 	config *UserConfig
 	users  map[string]bool
 	groups map[string]bool
 	emails map[string]bool
 }
 
-func NewUserValidator(configFileName string) (UserValidator, error) {
-	config.Log.Infof("Will use '%s' for users permissions", configFileName)
-	file, err := os.Open(configFileName)
+func newUserValidator() (*userValidator, error) {
+	config.Log.Infof("Will use '%s' for users permissions", config.Conf.UserConfigFile)
+	file, err := os.Open(config.Conf.UserConfigFile)
 	if err != nil {
 		return nil, err
 	}
@@ -29,7 +48,7 @@ func NewUserValidator(configFileName string) (UserValidator, error) {
 	if err = decoder.Decode(uc); err != nil {
 		return nil, err
 	}
-	validator := &UserValidatorImpl{
+	validator := &userValidator{
 		config: uc,
 		users:  make(map[string]bool),
 		groups: make(map[string]bool),
@@ -54,7 +73,7 @@ type claim struct {
 	Groups        []string `yaml:"groups"`
 }
 
-func (this *UserValidatorImpl) ValidateUser(claimJson string) (bool, error) {
+func (this *userValidator) validateUser(claimJson string) (bool, error) {
 	var claim claim
 	err := yaml.Unmarshal([]byte(claimJson), &claim)
 	if err != nil {
@@ -69,7 +88,7 @@ func (this *UserValidatorImpl) ValidateUser(claimJson string) (bool, error) {
 	if claim.Groups != nil {
 		for _, group := range claim.Groups {
 			if _, ok := this.groups[group]; ok {
-				config.Log.Infof("user '%s' belonging to group '%s' is allowed to access", claim.Name, group)
+				config.Log.Infof("user '%s' as belonging to group '%s' is allowed to access", claim.Name, group)
 				return true, nil
 			}
 		}

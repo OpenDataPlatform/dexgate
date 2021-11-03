@@ -4,7 +4,7 @@ logLevel:   "DEBUG"
 bindAddr: ":9001"
 targetURL: "http://localhost:8102"
 passthroughs: [ "/favicon.ico" ]
-tokenDisplay: true
+tokenDisplay: false
 oidc:
   clientID: dexgate
   clientSecret: Asjhuiu8899ZERtty9K9JST

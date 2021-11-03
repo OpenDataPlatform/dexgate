@@ -52,7 +52,7 @@ func main() {
 		_, _ = fmt.Fprintf(os.Stderr, "ERROR: Unable to instanciate OIDC subsystem:%v'\n", err)
 		os.Exit(2)
 	}
-	userValidator, err := users.NewUserValidator(config.Conf.UserConfigFile)
+	userFilter, err := users.NewUserFilter()
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "ERROR: Unable to load '%s': %v\n", config.Conf.UserConfigFile, err)
 		os.Exit(2)
@@ -61,7 +61,7 @@ func main() {
 	mux.Handle("/dg_logout", lougoutHandler(sessionManager))
 	mux.Handle("/dg_info", infoHandler(sessionManager))
 	mux.Handle("/dg_unallowed", unallowedHandler(sessionManager))
-	mux.Handle("/dg_callback", callbackHandler(sessionManager, oidcApp, userValidator))
+	mux.Handle("/dg_callback", callbackHandler(sessionManager, oidcApp, userFilter))
 	for _, path := range config.Conf.Passthroughs {
 		log.Infof("Will set passthrough for %s", path)
 		mux.Handle(path, passthroughHandler(reverseProxy))
@@ -105,7 +105,7 @@ func mainHandler(sessionManager *scs.SessionManager, reverseProxy *httputil.Reve
 	})
 }
 
-func callbackHandler(sessionManager *scs.SessionManager, oidcApp *oidcapp.OidcApp, userValidator users.UserValidator) http.Handler {
+func callbackHandler(sessionManager *scs.SessionManager, oidcApp *oidcapp.OidcApp, userFilter users.UserFilter) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		code, errMsg := oidcApp.CheckCallbackRequest(r)
 		if errMsg != "" {
@@ -118,7 +118,7 @@ func callbackHandler(sessionManager *scs.SessionManager, oidcApp *oidcapp.OidcAp
 			return
 		}
 		log.Debugf("claims:%v", tokenData.Claims)
-		logged, err := userValidator.ValidateUser(tokenData.Claims)
+		logged, err := userFilter.ValidateUser(tokenData.Claims)
 		if err != nil {
 			log.Errorf("Unable to decode claim '%s': %v", tokenData.Claims, err)
 			http.Error(w, fmt.Sprintf("Unable to decode claim '%s'", tokenData.Claims), http.StatusInternalServerError)

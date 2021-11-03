@@ -22,6 +22,7 @@ pre {
 	<h2>Unallowed !</h2>
 	<p>Your are not allowed to access this ressource.</p>
 	<p>Refer to your system administrator</p>
+	<input type="button" onclick="location.href='{{ .LandingURL }}';" value="RETRY with another account">
   </body>
 </html>
 `))

@@ -10,4 +10,8 @@ oidc:
   clientSecret: Asjhuiu8899ZERtty9K9JST
   issuerURL: http://127.0.0.1:5556/dex
   redirectURL: http://bypass.shared1/dg_callback
+  scopes:
+    - profile
+    - groups
+    - email
   debug: false
