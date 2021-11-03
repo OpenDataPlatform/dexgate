@@ -20,15 +20,15 @@ type OidcApp struct {
 	offlineAsScope bool
 }
 
-func NewOidcApp(config *config.OidcConfig) (*OidcApp, error) {
+func NewOidcApp(oidcConfig *config.OidcConfig) (*OidcApp, error) {
 	var err error
 	app := &OidcApp{
-		config: config,
+		config: oidcConfig,
 	}
 	// We build a specific http.client, for
 	// - Allowing some Debug on exchange
 	// - Setup SSL connection (TODO)
-	if config.Debug {
+	if oidcConfig.Debug {
 		if app.client == nil {
 			app.client = &http.Client{
 				Transport: debugTransport{http.DefaultTransport},
@@ -41,11 +41,11 @@ func NewOidcApp(config *config.OidcConfig) (*OidcApp, error) {
 		app.client = http.DefaultClient
 	}
 	ctx := oidc.ClientContext(context.Background(), app.client)
-	app.provider, err = oidc.NewProvider(ctx, config.IssuerURL)
+	app.provider, err = oidc.NewProvider(ctx, oidcConfig.IssuerURL)
 	if err != nil {
-		return nil, fmt.Errorf("failed to query provider %q: %v", config.IssuerURL, err)
+		return nil, fmt.Errorf("failed to query provider %q: %v", oidcConfig.IssuerURL, err)
 	}
-	app.verifier = app.provider.Verifier(&oidc.Config{ClientID: config.ClientID})
+	app.verifier = app.provider.Verifier(&oidc.Config{ClientID: oidcConfig.ClientID})
 
 	// Following is copied from dex/exammple/example.-app/main.go
 	var s struct {
@@ -73,6 +73,16 @@ func NewOidcApp(config *config.OidcConfig) (*OidcApp, error) {
 			return false
 		}()
 	}
+	// Check if configured scopes match the supported one.
+	ssmap := make(map[string]bool)
+	for _, scope := range s.ScopesSupported {
+		ssmap[scope] = true
+	}
+	for _, scope := range config.Conf.OidcConfig.Scopes {
+		if _, ok := ssmap[scope]; !ok {
+			return nil, fmt.Errorf("Scope '%s' is not supported by this OIDC server", scope)
+		}
+	}
 	return app, nil
 }
 
@@ -87,7 +97,10 @@ func (app *OidcApp) oauth2Config(scopes []string) *oauth2.Config {
 }
 
 func (app *OidcApp) NewLoginURL() string {
-	scopes := []string{"openid", "profile", "email", "groups"}
+	//scopes := []string{"openid", "profile", "email", "groups"}
+	scopes := make([]string, len(config.Conf.OidcConfig.Scopes))
+	copy(scopes, config.Conf.OidcConfig.Scopes)
+	scopes = append(scopes, "openid") // This is required
 	if app.offlineAsScope {
 		scopes = append(scopes, "offline_access")
 		return app.oauth2Config(scopes).AuthCodeURL(DexgateAppState)

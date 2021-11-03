@@ -111,7 +111,9 @@ func Setup() {
 	if Conf.OidcConfig.RedirectURL == "" {
 		missingParameter("oidcConfig.redirectURL")
 	}
-
+	if Conf.OidcConfig.Scopes == nil {
+		Conf.OidcConfig.Scopes = []string{"profile"}
+	}
 	// ----------------------- Session handling
 	IdleTimeout, err = time.ParseDuration(Conf.SessionConfig.IdleTimeout)
 	if err != nil {
