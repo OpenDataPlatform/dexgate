@@ -2,31 +2,77 @@ package users
 
 import (
 	"dexgate/internal/config"
+	"github.com/fsnotify/fsnotify"
 	"gopkg.in/yaml.v2"
 	"os"
 )
 
 type UserFilter interface {
 	ValidateUser(claim string) (bool, error)
+	Close()
 }
 
 type userFilterImpl struct {
 	validator *userValidator
+	watcher   *fsnotify.Watcher
 }
 
 func (this *userFilterImpl) ValidateUser(claim string) (bool, error) {
 	return this.validator.validateUser(claim)
 }
 
+func (this *userFilterImpl) Close() {
+	if this.watcher != nil {
+		_ = this.watcher.Close()
+	}
+}
+
 func NewUserFilter() (UserFilter, error) {
 	validator, err := newUserValidator()
 	if err != nil {
 		return nil, err
-	} else {
-		return &userFilterImpl{
-			validator: validator,
-		}, nil
 	}
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		return nil, err
+	}
+	impl := &userFilterImpl{
+		validator: validator,
+		watcher:   watcher,
+	}
+
+	go func() {
+		for {
+			select {
+			case event, ok := <-watcher.Events:
+				if !ok {
+					config.Log.Errorf("Users config file reload watcher has been closed. No more automatic reload!")
+					return
+				}
+				//config.Log.Debugf("event:", event)
+				if event.Op&fsnotify.Write == fsnotify.Write {
+					config.Log.Debugf("modified file:", event.Name)
+					validator, err := newUserValidator()
+					if err != nil {
+						config.Log.Errorf("Error on reloading users config file: '%v'. Keep old version", err)
+					}
+					impl.validator = validator
+				}
+			case err, ok := <-watcher.Errors:
+				if !ok {
+					config.Log.Errorf("Users config file reload watcher has been closed. No more automatic reload!")
+					return
+				}
+				config.Log.Errorf("Error on users config file reload watcher :%v", err)
+			}
+		}
+	}()
+	err = watcher.Add(config.Conf.UserConfigFile)
+	if err != nil {
+		return nil, err
+	}
+	return impl, nil
+
 }
 
 type userValidator struct {

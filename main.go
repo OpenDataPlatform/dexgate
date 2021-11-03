@@ -57,6 +57,8 @@ func main() {
 		_, _ = fmt.Fprintf(os.Stderr, "ERROR: Unable to load '%s': %v\n", config.Conf.UserConfigFile, err)
 		os.Exit(2)
 	}
+	defer userFilter.Close()
+
 	mux := http.NewServeMux()
 	mux.Handle("/dg_logout", lougoutHandler(sessionManager))
 	mux.Handle("/dg_info", infoHandler(sessionManager))
