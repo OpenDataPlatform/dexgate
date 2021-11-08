@@ -1,6 +1,7 @@
 
-allowedUsers:
-  - "xJules TESTEUR"
+allowedUsers: []
+  #- "Jules TESTEUR"
+  #- "Graham HILL"
 
 allowedGroups:
   - devs
