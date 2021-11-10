@@ -8,10 +8,11 @@ tokenDisplay: False
 oidc:
   clientID: dexgate
   clientSecret: Asjhuiu8899ZERtty9K9JST
-  issuerURL: http://127.0.0.1:5556/dex
+  issuerURL: https://dex.shared1/dex
   redirectURL: http://bypass.shared1/dg_callback
+  #rootCAFile: ca.crt
   scopes:
     - profile
     - groups
     - email
-  debug: false
+  debug: true

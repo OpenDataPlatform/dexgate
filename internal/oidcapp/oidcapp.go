@@ -2,12 +2,17 @@ package oidcapp
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"dexgate/internal/config"
 	"encoding/json"
 	"fmt"
 	"github.com/coreos/go-oidc/v3/oidc"
 	"golang.org/x/oauth2"
+	"net"
 	"net/http"
+	"os"
+	"time"
 )
 
 const DexgateAppState = "WhatANiceAuthStuff"
@@ -28,6 +33,13 @@ func NewOidcApp(oidcConfig *config.OidcConfig) (*OidcApp, error) {
 	// We build a specific http.client, for
 	// - Allowing some Debug on exchange
 	// - Setup SSL connection (TODO)
+	if oidcConfig.RootCAFile != "" {
+		client, err := httpClientForRootCAs(oidcConfig.RootCAFile)
+		if err != nil {
+			return nil, err
+		}
+		app.client = client
+	}
 	if oidcConfig.Debug {
 		if app.client == nil {
 			app.client = &http.Client{
@@ -84,6 +96,31 @@ func NewOidcApp(oidcConfig *config.OidcConfig) (*OidcApp, error) {
 		}
 	}
 	return app, nil
+}
+
+// return an HTTP client which trusts the provided root CAs.
+func httpClientForRootCAs(rootCAs string) (*http.Client, error) {
+	tlsConfig := tls.Config{RootCAs: x509.NewCertPool()}
+	rootCABytes, err := os.ReadFile(rootCAs)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read root-ca: %v", err)
+	}
+	if !tlsConfig.RootCAs.AppendCertsFromPEM(rootCABytes) {
+		return nil, fmt.Errorf("no certs found in root CA file %q", rootCAs)
+	}
+	config.Log.Debugf("CA file '%s' loaded successfully.", rootCAs)
+	return &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tlsConfig,
+			Proxy:           http.ProxyFromEnvironment,
+			Dial: (&net.Dialer{
+				Timeout:   30 * time.Second,
+				KeepAlive: 30 * time.Second,
+			}).Dial,
+			TLSHandshakeTimeout:   10 * time.Second,
+			ExpectContinueTimeout: 1 * time.Second,
+		},
+	}, nil
 }
 
 func (app *OidcApp) oauth2Config(scopes []string) *oauth2.Config {

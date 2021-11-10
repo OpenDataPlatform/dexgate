@@ -31,6 +31,7 @@ type OidcConfig struct {
 	IssuerURL    string   `yaml:"issuerURL"`    // URL of the OpenID Connect issuer.
 	RedirectURL  string   `yaml:"redirectURL"`  // Callback URL for OAuth2 responses. Domain must be same as initial call, for cookies to be shared;
 	Scopes       []string `yaml:"scopes"`       // The scopes we will request from the OIDC server. Default: "profile"
+	RootCAFile   string   `yaml:"rootCAFile"`   // The root CA file for validation of IssuerURL
 	Debug        bool     `yaml:"debug"`        // Print all request and responses from the OpenID Connect issuer.
 }
 

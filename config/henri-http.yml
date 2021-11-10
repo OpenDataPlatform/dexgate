@@ -14,7 +14,7 @@ oidc:
     - profile
     - groups
     - email
-  debug: false
+  debug: true
 
 
 

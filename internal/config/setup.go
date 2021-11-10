@@ -42,6 +42,7 @@ func Setup() {
 	var idleTimeout string
 	var sessionLifetime string
 	var userConfigFile string
+	var oidcRootCAFile string
 
 	pflag.StringVar(&configFile, "config", "config.yml", "Configuration file")
 	pflag.StringVar(&logLevel, "logLevel", "INFO", "Log level (PANIC|FATAL|ERROR|WARN|INFO|DEBUG|TRACE)")
@@ -53,6 +54,7 @@ func Setup() {
 	pflag.StringVar(&idleTimeout, "idleTimeout", "15m", "The maximum length of time a session can be inactive before being expired")
 	pflag.StringVar(&sessionLifetime, "sessionLifetime", "6h", "The absolute maximum length of time that a session is valid.")
 	pflag.StringVar(&userConfigFile, "userConfigFile", "users.yml", "Users / Groups permission file.")
+	pflag.StringVar(&oidcRootCAFile, "oidcRootCAFile", "", "Root CA for validation of issuer URL.")
 
 	pflag.CommandLine.SortFlags = false
 	pflag.Parse()
@@ -62,6 +64,11 @@ func Setup() {
 		_, _ = fmt.Fprintf(os.Stderr, "ERROR: Unable to load config file: %v\n", err)
 		os.Exit(2)
 	}
+
+	// Set relative to main config file. Performed before adjusting frmoo command line.
+	adjustPath(Conf.configFolder, &Conf.OidcConfig.RootCAFile)
+	adjustPath(Conf.configFolder, &Conf.UserConfigFile)
+
 	adjustConfigString(pflag.CommandLine, &Conf.LogLevel, "logLevel")
 	adjustConfigString(pflag.CommandLine, &Conf.LogMode, "logMode")
 	adjustConfigString(pflag.CommandLine, &Conf.BindAddr, "bindAddr")
@@ -71,6 +78,7 @@ func Setup() {
 	adjustConfigString(pflag.CommandLine, &Conf.SessionConfig.IdleTimeout, "idleTimeout")
 	adjustConfigString(pflag.CommandLine, &Conf.SessionConfig.Lifetime, "sessionLifetime")
 	adjustConfigString(pflag.CommandLine, &Conf.UserConfigFile, "userConfigFile")
+	adjustConfigString(pflag.CommandLine, &Conf.OidcConfig.RootCAFile, "oidcRootCAFile")
 
 	// -----------------------------------Handle logging  stuff
 	if Conf.LogMode != "dev" && Conf.LogMode != "json" {
@@ -114,6 +122,7 @@ func Setup() {
 	if Conf.OidcConfig.Scopes == nil {
 		Conf.OidcConfig.Scopes = []string{"profile"}
 	}
+
 	// ----------------------- Session handling
 	IdleTimeout, err = time.ParseDuration(Conf.SessionConfig.IdleTimeout)
 	if err != nil {
@@ -128,8 +137,6 @@ func Setup() {
 	if Conf.UserConfigFile == "" {
 		missingParameter("userConfigFile")
 	}
-	// Set relative to main config file
-	adjustPath(Conf.configFolder, &Conf.UserConfigFile)
 }
 
 func missingParameter(param string) {
