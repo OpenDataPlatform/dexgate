@@ -2,9 +2,9 @@ package users
 
 import (
 	"dexgate/internal/config"
-	"github.com/fsnotify/fsnotify"
+	"dexgate/pkg/configwatcher"
+	"fmt"
 	"gopkg.in/yaml.v2"
-	"os"
 )
 
 type UserFilter interface {
@@ -14,7 +14,7 @@ type UserFilter interface {
 
 type userFilterImpl struct {
 	validator *userValidator
-	watcher   *fsnotify.Watcher
+	watcher   configwatcher.ConfigWatcher
 }
 
 func (this *userFilterImpl) ValidateUser(claim string) (bool, error) {
@@ -23,56 +23,53 @@ func (this *userFilterImpl) ValidateUser(claim string) (bool, error) {
 
 func (this *userFilterImpl) Close() {
 	if this.watcher != nil {
-		_ = this.watcher.Close()
+		this.watcher.Close()
 	}
 }
 
 func NewUserFilter() (UserFilter, error) {
-	validator, err := newUserValidator()
+	var userWatcher configwatcher.ConfigWatcher
+	var err error
+	if config.Conf.UsersConfigFile != "" {
+		userWatcher, err = configwatcher.NewConfigFileWatcher(config.Conf.UsersConfigFile, config.Log)
+	} else if config.Conf.UsersConfigMap.ConfigMapName != "" {
+		userWatcher, err = configwatcher.NewConfigMapWatcher(nil, config.Conf.UsersConfigMap.Namespace, config.Conf.UsersConfigMap.ConfigMapName, config.Conf.UsersConfigMap.ConfigMapKey, config.Log)
+	} else {
+		err = fmt.Errorf("Missing users watcher in configuration")
+	}
 	if err != nil {
 		return nil, err
 	}
-	watcher, err := fsnotify.NewWatcher()
+	data, err := userWatcher.Get()
 	if err != nil {
 		return nil, err
 	}
+	validator, err := newUserValidator(data)
+	if err != nil {
+		return nil, err
+	}
+	config.Log.Infof("Sucessfully loaded initial users configuration from '%s'", userWatcher.GetName())
+
 	impl := &userFilterImpl{
 		validator: validator,
-		watcher:   watcher,
+		watcher:   userWatcher,
+	}
+	usersCallback := func(data string) {
+		v, err := newUserValidator(data)
+		if err != nil {
+			config.Log.Errorf("watcher on '%s': Error on reloading user configuration: '%v'. Keep old version", userWatcher.GetName(), err)
+		} else {
+			// Substitute the new validator
+			config.Log.Infof("Sucessfully reloaded users configuration from '%s'", userWatcher.GetName())
+			impl.validator = v
+		}
 	}
 
-	go func() {
-		for {
-			select {
-			case event, ok := <-watcher.Events:
-				if !ok {
-					config.Log.Errorf("Users config file reload watcher has been closed. No more automatic reload!")
-					return
-				}
-				//config.Log.Debugf("event:", event)
-				if event.Op&fsnotify.Write == fsnotify.Write {
-					config.Log.Debugf("modified file:", event.Name)
-					validator, err := newUserValidator()
-					if err != nil {
-						config.Log.Errorf("Error on reloading users config file: '%v'. Keep old version", err)
-					}
-					impl.validator = validator
-				}
-			case err, ok := <-watcher.Errors:
-				if !ok {
-					config.Log.Errorf("Users config file reload watcher has been closed. No more automatic reload!")
-					return
-				}
-				config.Log.Errorf("Error on users config file reload watcher :%v", err)
-			}
-		}
-	}()
-	err = watcher.Add(config.Conf.UserConfigFile)
+	err = userWatcher.Watch(usersCallback)
 	if err != nil {
 		return nil, err
 	}
 	return impl, nil
-
 }
 
 type userValidator struct {
@@ -82,17 +79,10 @@ type userValidator struct {
 	emails map[string]bool
 }
 
-func newUserValidator() (*userValidator, error) {
-	config.Log.Infof("Will use '%s' for users permissions", config.Conf.UserConfigFile)
-	file, err := os.Open(config.Conf.UserConfigFile)
-	if err != nil {
-		return nil, err
-	}
+func newUserValidator(json string) (*userValidator, error) {
 	uc := &UserConfig{}
-	decoder := yaml.NewDecoder(file)
-	decoder.SetStrict(true)
-	if err = decoder.Decode(uc); err != nil {
-		return nil, err
+	if err := yaml.UnmarshalStrict([]byte(json), uc); err != nil {
+		return nil, fmt.Errorf("Error in parsing users yaml file: '%v'", err)
 	}
 	validator := &userValidator{
 		config: uc,
@@ -100,6 +90,7 @@ func newUserValidator() (*userValidator, error) {
 		groups: make(map[string]bool),
 		emails: make(map[string]bool),
 	}
+	// Transform lists in sets
 	for _, user := range uc.AllowedUsers {
 		validator.users[user] = true
 	}

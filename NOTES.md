@@ -12,6 +12,9 @@ https://github.com/oauth2-proxy/oauth2-proxy
 
 https://www.youtube.com/watch?v=-TzLER2fX84
 
+https://github.com/Werkspot/k8s-event-listener
+https://github.com/kiwigrid/k8s-configmap-watcher
+
 ## Session mgmt
 
 https://github.com/alexedwards/scs

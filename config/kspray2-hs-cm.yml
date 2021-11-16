@@ -1,18 +1,21 @@
 ---
 logMode: dev
-logLevel:   "DEBUG"
+logLevel:   "INFO"
 bindAddr: ":9999"
 targetURL: "http://n0.kspray2:30999"
 passthroughs: [ "/favicon.ico" ]
 tokenDisplay: False
+usersConfigMap:
+  configMapName: dexgate-users-spark-hs
+  namespace: gha2a-spark-system
 oidc:
   clientID: dexgate
   clientSecret: Asjhuiu8899ZERtty9K9JST
   issuerURL: https://dex.shared1/dex
-  redirectURL: http://bypass.shared1/dg_callback
+  redirectURL: https://bypass.shared1/dg_callback
   #rootCAFile: ca.crt
   scopes:
     - profile
     - groups
     - email
-  debug: true
+  debug: false

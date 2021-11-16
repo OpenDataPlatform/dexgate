@@ -54,7 +54,7 @@ func main() {
 	}
 	userFilter, err := users.NewUserFilter()
 	if err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "ERROR: Unable to load '%s': %v\n", config.Conf.UserConfigFile, err)
+		_, _ = fmt.Fprintf(os.Stderr, "ERROR: Unable to load '%s': %v\n", config.Conf.UsersConfigFile, err)
 		os.Exit(2)
 	}
 	defer userFilter.Close()

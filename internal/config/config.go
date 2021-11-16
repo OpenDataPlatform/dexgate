@@ -40,15 +40,22 @@ type SessionConfig struct {
 	Lifetime    string `yaml:"lifetime"`    // The absolute maximum length of time that a session is valid.
 }
 
+type UsersConfigMap struct {
+	Namespace     string `yaml:"namespace"`     // If empty lookup current namespace. Used in out-of-cluster mode
+	ConfigMapName string `yaml:"configMapName"` // Mandatory. If "", then will use UserConfigFile
+	ConfigMapKey  string `yaml:"configMapKey"`  // Default to 'users.yml'
+}
+
 type Config struct {
-	configFolder   string
-	LogLevel       string        `yaml:"logLevel"`       // INFO,DEBUG, ....
-	LogMode        string        `yaml:"logMode"`        // Log output format: 'dev' or 'json'
-	BindAddr       string        `yaml:"bindAddr"`       // The address to listen on. (default to :9001)
-	TargetURL      string        `yaml:"targetURL"`      // The URL to forward all requests
-	OidcConfig     OidcConfig    `yaml:"oidc"`           // OIDC client config
-	Passthroughs   []string      `yaml:"passthroughs"`   // Paths pattern to forward without authentication (See http.ServeMux for path definition)
-	TokenDisplay   bool          `yaml:"tokenDisplay"`   // Display an intermediate token page after login (Debugging only)
-	SessionConfig  SessionConfig `yaml:"sessionConfig"`  // Web session parameters
-	UserConfigFile string        `yaml:"userConfigFile"` // File hosting allowed users/groups
+	configFolder    string
+	LogLevel        string         `yaml:"logLevel"`        // INFO,DEBUG, ....
+	LogMode         string         `yaml:"logMode"`         // Log output format: 'dev' or 'json'
+	BindAddr        string         `yaml:"bindAddr"`        // The address to listen on. (default to :9001)
+	TargetURL       string         `yaml:"targetURL"`       // The URL to forward all requests
+	OidcConfig      OidcConfig     `yaml:"oidc"`            // OIDC client config
+	Passthroughs    []string       `yaml:"passthroughs"`    // Paths pattern to forward without authentication (See http.ServeMux for path definition)
+	TokenDisplay    bool           `yaml:"tokenDisplay"`    // Display an intermediate token page after login (Debugging only)
+	SessionConfig   SessionConfig  `yaml:"sessionConfig"`   // Web session parameters
+	UsersConfigFile string         `yaml:"usersConfigFile"` // File hosting allowed users/groups
+	UsersConfigMap  UsersConfigMap `yaml:"usersConfigMap"`  //
 }

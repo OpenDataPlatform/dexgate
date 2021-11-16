@@ -41,8 +41,11 @@ func Setup() {
 	var tokenDisplay bool
 	var idleTimeout string
 	var sessionLifetime string
-	var userConfigFile string
 	var oidcRootCAFile string
+	var usersConfigFile string
+	var usersConfigMapNamespace string
+	var usersConfigMapName string
+	var usersConfigMapKey string
 
 	pflag.StringVar(&configFile, "config", "config.yml", "Configuration file")
 	pflag.StringVar(&logLevel, "logLevel", "INFO", "Log level (PANIC|FATAL|ERROR|WARN|INFO|DEBUG|TRACE)")
@@ -53,8 +56,11 @@ func Setup() {
 	pflag.BoolVar(&tokenDisplay, "tokenDisplay", false, "Display an intermediate token page after login (Debugging only).")
 	pflag.StringVar(&idleTimeout, "idleTimeout", "15m", "The maximum length of time a session can be inactive before being expired")
 	pflag.StringVar(&sessionLifetime, "sessionLifetime", "6h", "The absolute maximum length of time that a session is valid.")
-	pflag.StringVar(&userConfigFile, "userConfigFile", "users.yml", "Users / Groups permission file.")
 	pflag.StringVar(&oidcRootCAFile, "oidcRootCAFile", "", "Root CA for validation of issuer URL.")
+	pflag.StringVar(&usersConfigFile, "usersConfigFile", "", "Users/Groups permission file.")
+	pflag.StringVar(&usersConfigMapNamespace, "usersConfigMapNamespace", "", "Users/Groups permission configMap namespace.")
+	pflag.StringVar(&usersConfigMapName, "usersConfigMapName", "", "Users/Groups permission configMap name.")
+	pflag.StringVar(&usersConfigMapKey, "usersConfigMapKey", "users.yml", "Users/Groups permission key in configMap.")
 
 	pflag.CommandLine.SortFlags = false
 	pflag.Parse()
@@ -67,7 +73,7 @@ func Setup() {
 
 	// Set relative to main config file. Performed before adjusting frmoo command line.
 	adjustPath(Conf.configFolder, &Conf.OidcConfig.RootCAFile)
-	adjustPath(Conf.configFolder, &Conf.UserConfigFile)
+	adjustPath(Conf.configFolder, &Conf.UsersConfigFile)
 
 	adjustConfigString(pflag.CommandLine, &Conf.LogLevel, "logLevel")
 	adjustConfigString(pflag.CommandLine, &Conf.LogMode, "logMode")
@@ -77,8 +83,11 @@ func Setup() {
 	adjustConfigBool(pflag.CommandLine, &Conf.TokenDisplay, "tokenDisplay")
 	adjustConfigString(pflag.CommandLine, &Conf.SessionConfig.IdleTimeout, "idleTimeout")
 	adjustConfigString(pflag.CommandLine, &Conf.SessionConfig.Lifetime, "sessionLifetime")
-	adjustConfigString(pflag.CommandLine, &Conf.UserConfigFile, "userConfigFile")
 	adjustConfigString(pflag.CommandLine, &Conf.OidcConfig.RootCAFile, "oidcRootCAFile")
+	adjustConfigString(pflag.CommandLine, &Conf.UsersConfigFile, "usersConfigFile")
+	adjustConfigString(pflag.CommandLine, &Conf.UsersConfigMap.Namespace, "usersConfigMapNamespace")
+	adjustConfigString(pflag.CommandLine, &Conf.UsersConfigMap.ConfigMapName, "usersConfigMapName")
+	adjustConfigString(pflag.CommandLine, &Conf.UsersConfigMap.ConfigMapKey, "usersConfigMapKey")
 
 	// -----------------------------------Handle logging  stuff
 	if Conf.LogMode != "dev" && Conf.LogMode != "json" {
@@ -134,8 +143,13 @@ func Setup() {
 		_, _ = fmt.Fprintf(os.Stderr, "ERROR: '%s' is not a valid Duration for 'sessionConfig.lifetime' parameter\n", Conf.SessionConfig.Lifetime)
 		os.Exit(2)
 	}
-	if Conf.UserConfigFile == "" {
-		missingParameter("userConfigFile")
+	// ---------------------- Users configuration
+	if (Conf.UsersConfigFile == "") && (Conf.UsersConfigMap.ConfigMapName == "") {
+		_, _ = fmt.Fprintf(os.Stderr, "ERROR: One of 'usersConfigFile' and 'usersConfigMapName' parameters must be defined\n")
+		os.Exit(2)
+	} else if (Conf.UsersConfigFile != "") && (Conf.UsersConfigMap.ConfigMapName != "") {
+		_, _ = fmt.Fprintf(os.Stderr, "ERROR: Only one of 'usersConfigFile' and 'usersConfigMapName' parameters must be defined\n")
+		os.Exit(2)
 	}
 }
 
