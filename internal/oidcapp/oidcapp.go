@@ -57,6 +57,7 @@ func NewOidcApp(oidcConfig *config.OidcConfig) (*OidcApp, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to query provider %q: %v", oidcConfig.IssuerURL, err)
 	}
+	config.Log.Infof("Successfully queried provider %q", oidcConfig.IssuerURL)
 	app.verifier = app.provider.Verifier(&oidc.Config{ClientID: oidcConfig.ClientID})
 
 	// Following is copied from dex/exammple/example.-app/main.go
