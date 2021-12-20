@@ -17,10 +17,6 @@ import (
 
 /*
 TODO
-- implements allowed email/groups lists
-- Enable SSL on input
-- Enable SSL/CA on client
-- Kube integration
 - Perform retry to allow late Dex startup (Or let K8S handle this case)
 - Documentation
 */
