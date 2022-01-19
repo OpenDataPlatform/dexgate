@@ -11,6 +11,7 @@ import (
 	"golang.org/x/oauth2"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"time"
 )
@@ -57,7 +58,11 @@ func NewOidcApp(oidcConfig *config.OidcConfig) (*OidcApp, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to query provider %q: %v", oidcConfig.IssuerURL, err)
 	}
-	config.Log.Infof("Successfully queried provider %q", oidcConfig.IssuerURL)
+	if oidcConfig.LoginURLOverride == "" {
+		config.Log.Infof("Successfully queried provider %q", oidcConfig.IssuerURL)
+	} else {
+		config.Log.Infof("Successfully queried provider %q. (NB: Login URL will be overriden by '%s')", oidcConfig.IssuerURL, oidcConfig.LoginURLOverride)
+	}
 	app.verifier = app.provider.Verifier(&oidc.Config{ClientID: oidcConfig.ClientID})
 
 	// Following is copied from dex/exammple/example.-app/main.go
@@ -134,17 +139,34 @@ func (app *OidcApp) oauth2Config(scopes []string) *oauth2.Config {
 	}
 }
 
-func (app *OidcApp) NewLoginURL() string {
+func (app *OidcApp) hackUrl(loginUrl string) (string, error) {
+	if app.config.LoginURLOverride == "" {
+		return loginUrl, nil
+	} else {
+		loginURL, err := url.Parse(loginUrl)
+		if err != nil {
+			return "", fmt.Errorf("Error in parsing login URL '%s': %w", loginURL, err)
+		}
+		config.Log.Debugf("NewLoginURL before override: scheme:%s   host:%s requestURI:%s", loginURL.Scheme, loginURL.Host, loginURL.RequestURI())
+		loginUrl = app.config.LoginURLOverride + "/" + loginURL.RequestURI()
+		config.Log.Debugf("NewLoginURL after override: %s", loginUrl)
+		return loginUrl, nil
+	}
+}
+
+func (app *OidcApp) NewLoginURL() (string, error) {
 	//scopes := []string{"openid", "profile", "email", "groups"}
+	var urls string
 	scopes := make([]string, len(config.Conf.OidcConfig.Scopes))
 	copy(scopes, config.Conf.OidcConfig.Scopes)
 	scopes = append(scopes, "openid") // This is required
 	if app.offlineAsScope {
 		scopes = append(scopes, "offline_access")
-		return app.oauth2Config(scopes).AuthCodeURL(DexgateAppState)
+		urls = app.oauth2Config(scopes).AuthCodeURL(DexgateAppState)
 	} else {
-		return app.oauth2Config(scopes).AuthCodeURL(DexgateAppState, oauth2.AccessTypeOffline)
+		urls = app.oauth2Config(scopes).AuthCodeURL(DexgateAppState, oauth2.AccessTypeOffline)
 	}
+	return app.hackUrl(urls)
 }
 
 func (app *OidcApp) CheckCallbackRequest(r *http.Request) (code string, errMsg string) {

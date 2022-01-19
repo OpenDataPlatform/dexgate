@@ -26,13 +26,14 @@ var (
 )
 
 type OidcConfig struct {
-	ClientID     string   `yaml:"clientID"`     // OAuth2 client ID of this application.
-	ClientSecret string   `yaml:"clientSecret"` // "OAuth2 client secret of this application."
-	IssuerURL    string   `yaml:"issuerURL"`    // URL of the OpenID Connect issuer.
-	RedirectURL  string   `yaml:"redirectURL"`  // Callback URL for OAuth2 responses. Domain must be same as initial call, for cookies to be shared;
-	Scopes       []string `yaml:"scopes"`       // The scopes we will request from the OIDC server. Default: "profile"
-	RootCAFile   string   `yaml:"rootCAFile"`   // The root CA file for validation of IssuerURL
-	Debug        bool     `yaml:"debug"`        // Print all request and responses from the OpenID Connect issuer.
+	ClientID         string   `yaml:"clientID"`         // OAuth2 client ID of this application.
+	ClientSecret     string   `yaml:"clientSecret"`     // "OAuth2 client secret of this application."
+	IssuerURL        string   `yaml:"issuerURL"`        // URL of the OpenID Connect issuer.
+	RedirectURL      string   `yaml:"redirectURL"`      // Callback URL for OAuth2 responses. Domain must be same as initial call, for cookies to be shared;
+	Scopes           []string `yaml:"scopes"`           // The scopes we will request from the OIDC server. Default: "profile"
+	RootCAFile       string   `yaml:"rootCAFile"`       // The root CA file for validation of IssuerURL
+	LoginURLOverride string   `yaml:"loginURLOverride"` // Allow overriding of scheme and host part of the login URL provided by the OIDC server
+	Debug            bool     `yaml:"debug"`            // Print all request and responses from the OpenID Connect issuer.
 }
 
 type SessionConfig struct {

@@ -46,6 +46,7 @@ func Setup() {
 	var usersConfigMapNamespace string
 	var usersConfigMapName string
 	var usersConfigMapKey string
+	var loginURLOverride string
 
 	pflag.StringVar(&configFile, "config", "config.yml", "Configuration file")
 	pflag.StringVar(&logLevel, "logLevel", "INFO", "Log level (PANIC|FATAL|ERROR|WARN|INFO|DEBUG|TRACE)")
@@ -61,6 +62,7 @@ func Setup() {
 	pflag.StringVar(&usersConfigMapNamespace, "usersConfigMapNamespace", "", "Users/Groups permission configMap namespace.")
 	pflag.StringVar(&usersConfigMapName, "usersConfigMapName", "", "Users/Groups permission configMap name.")
 	pflag.StringVar(&usersConfigMapKey, "usersConfigMapKey", "users.yml", "Users/Groups permission key in configMap.")
+	pflag.StringVar(&loginURLOverride, "loginURLOverride", "", "Allow overriding of scheme and host part of the login URL provided by the OIDC server.")
 
 	pflag.CommandLine.SortFlags = false
 	pflag.Parse()
@@ -88,6 +90,7 @@ func Setup() {
 	adjustConfigString(pflag.CommandLine, &Conf.UsersConfigMap.Namespace, "usersConfigMapNamespace")
 	adjustConfigString(pflag.CommandLine, &Conf.UsersConfigMap.ConfigMapName, "usersConfigMapName")
 	adjustConfigString(pflag.CommandLine, &Conf.UsersConfigMap.ConfigMapKey, "usersConfigMapKey")
+	adjustConfigString(pflag.CommandLine, &Conf.OidcConfig.LoginURLOverride, "loginURLOverride")
 
 	// -----------------------------------Handle logging  stuff
 	if Conf.LogMode != "dev" && Conf.LogMode != "json" {
@@ -130,6 +133,18 @@ func Setup() {
 	}
 	if Conf.OidcConfig.Scopes == nil {
 		Conf.OidcConfig.Scopes = []string{"profile"}
+	}
+
+	if Conf.OidcConfig.LoginURLOverride != "" {
+		myURL, err := url.Parse(Conf.OidcConfig.LoginURLOverride)
+		if err != nil {
+			_, _ = fmt.Fprintf(os.Stderr, "ERROR: 'oidcConfig.loginURLOverride' parameter: '%s' is not a valid URL.\n", Conf.OidcConfig.LoginURLOverride)
+			os.Exit(2)
+		}
+		if myURL.RequestURI() != "/" {
+			_, _ = fmt.Fprintf(os.Stderr, "ERROR: 'oidcConfig.loginURLOverride' parameter: '%s' must be only <scheme>://<host>. Remove '%s'.\n", Conf.OidcConfig.LoginURLOverride, myURL.RequestURI())
+			os.Exit(2)
+		}
 	}
 
 	// ----------------------- Session handling

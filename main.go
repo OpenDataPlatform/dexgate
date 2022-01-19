@@ -92,10 +92,15 @@ func mainHandler(sessionManager *scs.SessionManager, reverseProxy *httputil.Reve
 		token := sessionManager.GetString(r.Context(), accessTokenKey)
 		if token == "" {
 			// Fresh session. Must enter login process
-			lurl := oidcApp.NewLoginURL()
-			log.Debugf("%s %s => Not logged. Will redirect to %s", r.Method, r.URL, lurl)
-			sessionManager.Put(r.Context(), landingURLKey, r.URL.String())
-			http.Redirect(w, r, lurl, http.StatusSeeOther)
+			lurl, err := oidcApp.NewLoginURL()
+			if err != nil {
+				config.Log.Errorf(err.Error())
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			} else {
+				log.Debugf("%s %s => Not logged. Will redirect to %s", r.Method, r.URL, lurl)
+				sessionManager.Put(r.Context(), landingURLKey, r.URL.String())
+				http.Redirect(w, r, lurl, http.StatusSeeOther)
+			}
 		} else {
 			log.Debugf("%s %s => Forward to target (Authenticated)", r.Method, r.URL)
 			reverseProxy.ServeHTTP(w, r)
