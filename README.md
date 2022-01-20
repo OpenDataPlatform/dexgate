@@ -46,9 +46,72 @@ Alternate interaction:
 ### Initialisation:
 
 An OIDC server provide a set of entry points for different action (User login interaction, code validation, token renewal, etc....). 
+
 Fortunately, for an administrator, there is only one to define: the so called 'issuer URL'. 
+
 When `dexgate` start, it will retrieve  the OIDC configuration from a 'well known' path, based on this issuer URL. 
 For example, if the issuer URL is  `https://dex.ingress.my.cluster.com/dex`, it will send a request to `https://dex.ingress.my.cluster.com/dex/.well-known/openid-configuration`
+
+## Configuration
+
+`Dexgate` configuration is performed using two separate files: One for the general configuration and one describing user permission.
+
+The main reason for such separation is that the configuration has no reason to change once setup is completed, while user permission change are normal part of life.
+
+Also, most of the configuration parameters can be overriden on the command line.
+
+The default configuration file is `config.yml`. Its name and path can be overriden using the `--config` parameter.
+
+| Name                        | CLI param                 | required | Default | Description                                                                                                 |
+|-----------------------------|---------------------------|----|----|-------------------------------------------------------------------------------------------------------------|
+| N/A                         | --config                  | No | config.yml | Path of the main config file hosting the below parameters                                                   |
+| logLevel                    | --logLevel                | No | INFO | Log level (PANIC,FATAL,ERROR,WARN,INFO,DEBUG,TRACE)                                                         |
+| logMode                     | --logMod                  | No | json | In which form log are generated:<br>`json`: Appropriate for further indexing.<br>`dev`: More human readable |
+| bindAddr                    | --bindAddr                | | | |
+| targetURL                   | --targetUrl               | | | |
+| oidc.clientID               |                           | | | |
+| oidc.clientSecret           |                           | | | |
+| oidc.issuerURL              |                           | | | |
+| oidc.redirectURL            |                           | | | |
+| oidc.scopes                 |                           | | | |
+| oidc.rootCAFile             | -oidcRootCAFile           | | | |
+| oidc.loginURLOverride       | --loginURLOverride        | | | |
+| oidc.debug                  | --oidcDebug               | | | |
+| passthroughs                |                           | | | |
+| tokenDisplay                | --tokenDisplay            | | | |
+| sessionConfig.idleTimeout   | --idleTimeout             | | | |
+| sessionConfig.lifeTime      | --sessionLifetime         | | | |
+| userConfigFile              | --usersConfigFile         | | | |
+| userConfigMap.namespace     | --usersConfigMapNamespace | | | |
+| userConfigMap.configMapName | --usersConfigMapName      | | | |
+| userConfigMap.configMapKey  | --usersConfigMapKey       | | | |
+
+
+
+
+```
+$ ./dexgate --help
+Usage of ../../dexgate/bin/dexgate:
+--config string                    Configuration file (default "config.yml")
+--logLevel string                  Log level (PANIC|FATAL|ERROR|WARN|INFO|DEBUG|TRACE) (default "INFO")
+--logMode string                   Log mode: 'dev' or 'json' (default "json")
+--bindAddr string                  The address to listen on. (default ":9001")
+--targetUrl string                 All requests will be forwarded to this URL
+--oidcDebug                        Print all request and responses from the OpenID Connect issuer.
+--tokenDisplay                     Display an intermediate token page after login (Debugging only).
+--idleTimeout string               The maximum length of time a session can be inactive before being expired (default "15m")
+--sessionLifetime string           The absolute maximum length of time that a session is valid. (default "6h")
+--oidcRootCAFile string            Root CA for validation of issuer URL.
+--usersConfigFile string           Users/Groups permission file.
+--usersConfigMapNamespace string   Users/Groups permission configMap namespace.
+--usersConfigMapName string        Users/Groups permission configMap name.
+--usersConfigMapKey string         Users/Groups permission key in configMap. (default "users.yml")
+--loginURLOverride string          Allow overriding of scheme and host part of the login URL provided by the OIDC server.
+```
+
+
+## Users authorisation Hot Reload
+
 
 ## The Issuer URL.
 
@@ -58,16 +121,27 @@ A stated above, one of the main configuration parameter is the 'Issuer URL'
 - All other endpoints are based on this issuer URL (Same scheme and host).
 - As the user login URL is based on, this URL must be reachable from outside the kubernetes cluster.
 
+This last constraint means the issuer URL will typically be handled by the entry load balancer/ingress controler. 
+And, as there is only one configuration value, this means the connexion betweeen `dexgate` and `dex` will also go through this path. 
+So, the effective interaction is more like the following:
 
+![](docs/dexgate-Overview2.jpg)
 
+### login URL overriding
 
-When `dexgate` is starting, it will request 
+There may be some network configuration where such path will not works. It may be impossible for a pod to reach another one by using the external entry point, as depicted above.
 
-## Configuration reference
+In such case, a specific parameter has been added to override the URL sent to the user for the login. To use it, the Issuer URL must be defined using the kubernetes internal `dex` address,
+like `http://dex.<dexnamespace>.svc:5556/dex`. Doing so, the commnunication between `dexgate` and `dex` will be direct, as in the first picture. 
 
-## Users authorisation Hot Reload
+But, the login url which is also based on this adress, will be unreachable from outside of the Kubernetes context. To fix this, add the following in the configuration:
 
-## login URL overriding
+```
+oidc:
+  loginURLOverride: https://dex.ingress.my.cluster.com   # Adjust the URL to your context
+```
+
+Note than only the scheme and host part (Including port) can be overriden.
 
 ## Deployment
 
