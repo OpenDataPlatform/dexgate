@@ -10,7 +10,6 @@ Designed to be used in a kubernetes context, it is intended to be inserted betwe
 
 It works in cooperation with an OIDC authentication server. Currently, the only one tested is [DEX](https://github.com/dexidp/dex), one of the most used in a Kubernetes context.
 
-
 ## How it works
 
 A good understanding of the interaction between the componants is required to setup a working configuration.
@@ -56,38 +55,37 @@ For example, if the issuer URL is  `https://dex.ingress.my.cluster.com/dex`, it 
 
 `Dexgate` configuration is performed using two separate files: One for the general configuration and one describing user permission.
 
-The main reason for such separation is that the configuration has no reason to change once setup is completed, while user permission change are normal part of life.
-
-Also, most of the configuration parameters can be overriden on the command line.
+The main reason for such separation is that the configuration has no reason to change once setup is completed, while user permission change are usual.
 
 The default configuration file is `config.yml`. Its name and path can be overriden using the `--config` parameter.
 
-| Name                        | CLI param                 | required | Default | Description                                                                                                 |
-|-----------------------------|---------------------------|----|----|-------------------------------------------------------------------------------------------------------------|
-| N/A                         | --config                  | No | config.yml | Path of the main config file hosting the below parameters                                                   |
-| logLevel                    | --logLevel                | No | INFO | Log level (PANIC,FATAL,ERROR,WARN,INFO,DEBUG,TRACE)                                                         |
-| logMode                     | --logMod                  | No | json | In which form log are generated:<br>`json`: Appropriate for further indexing.<br>`dev`: More human readable |
-| bindAddr                    | --bindAddr                | | | |
-| targetURL                   | --targetUrl               | | | |
-| oidc.clientID               |                           | | | |
-| oidc.clientSecret           |                           | | | |
-| oidc.issuerURL              |                           | | | |
-| oidc.redirectURL            |                           | | | |
-| oidc.scopes                 |                           | | | |
-| oidc.rootCAFile             | -oidcRootCAFile           | | | |
-| oidc.loginURLOverride       | --loginURLOverride        | | | |
-| oidc.debug                  | --oidcDebug               | | | |
-| passthroughs                |                           | | | |
-| tokenDisplay                | --tokenDisplay            | | | |
-| sessionConfig.idleTimeout   | --idleTimeout             | | | |
-| sessionConfig.lifeTime      | --sessionLifetime         | | | |
-| userConfigFile              | --usersConfigFile         | | | |
-| userConfigMap.namespace     | --usersConfigMapNamespace | | | |
-| userConfigMap.configMapName | --usersConfigMapName      | | | |
-| userConfigMap.configMapKey  | --usersConfigMapKey       | | | |
+| Name                        |req.| Default | Description                                                                                                 |
+|-----------------------------|- --|----|-------------------------------------------------------------------------------------------------------------|
+| N/A                         | No | config.yml | Path of the main config file hosting the below parameters                                                   |
+| logLevel                    | No | INFO | Log level (PANIC,FATAL,ERROR,WARN,INFO,DEBUG,TRACE)                                                         |
+| logMode                     | No | json | In which form log are generated:<br>`json`: Appropriate for further indexing.<br>`dev`: More human readable |
+| bindAddr                    | No | :9001| The address dexgate will be listening |
+| targetURL                   | Yes| | The URL of the targeted web application. Typically, refer to a K8s Service |
+| oidc.clientID               | Yes| | OAuth2 client ID of this application. |
+| oidc.clientSecret           | Yes| | The secret associated to this clientID|
+| oidc.issuerURL              | Yes| | The |
+| oidc.redirectURL            |   | | |
+| oidc.scopes                 |   | | |
+| oidc.rootCAFile             |   | | |
+| oidc.loginURLOverride       |   | | |
+| oidc.debug                  |   | | |
+| passthroughs                |   | | |
+| tokenDisplay                |   | | |
+| sessionConfig.idleTimeout   |   | | |
+| sessionConfig.lifeTime      |   | | |
+| userConfigFile              |   | | |
+| userConfigMap.namespace     |   | | |
+| userConfigMap.configMapName |   | | |
+| userConfigMap.configMapKey  |   | | |
 
 
 
+Also, some of the configuration parameters can be overriden on the command line:
 
 ```
 $ ./dexgate --help
