@@ -61,20 +61,20 @@ The default configuration file is `config.yml`. Its name and path can be overrid
 
 | Name                        |req.| Default | Description                                                                                                 |
 |-----------------------------|- --|----|-------------------------------------------------------------------------------------------------------------|
-| N/A                         | No | config.yml | Path of the main config file hosting the below parameters                                                   |
-| logLevel                    | No | INFO | Log level (PANIC,FATAL,ERROR,WARN,INFO,DEBUG,TRACE)                                                         |
+| N/A                         | No | config.yml | Path of the main config file hosting the below parameters                                           |
+| logLevel                    | No | INFO | Log level (PANIC,FATAL,ERROR,WARN,INFO,DEBUG,TRACE)                                                     |
 | logMode                     | No | json | In which form log are generated:<br>`json`: Appropriate for further indexing.<br>`dev`: More human readable |
-| bindAddr                    | No | :9001| The address dexgate will be listening |
+| bindAddr                    | No | :9001| The address `dexgate` will be listening on. |
 | targetURL                   | Yes| | The URL of the targeted web application. Typically, refer to a K8s Service |
 | oidc.clientID               | Yes| | OAuth2 client ID of this application. |
-| oidc.clientSecret           | Yes| | The secret associated to this clientID|
-| oidc.issuerURL              | Yes| | The |
-| oidc.redirectURL            |   | | |
-| oidc.scopes                 |   | | |
-| oidc.rootCAFile             |   | | |
-| oidc.loginURLOverride       |   | | |
-| oidc.debug                  |   | | |
-| passthroughs                |   | | |
+| oidc.clientSecret           | Yes| | The secret associated to this clientID |
+| oidc.issuerURL              | Yes| | The OIDC server main URL entry. See above |
+| oidc.redirectURL            | Yes| | Where the OIDC server will redirect the user once authenticated. For security reasons, this URL must be also provided in the OIDC server configuration. |
+| oidc.scopes                 | No | ["profile"] | A list of string defining the type of user information we want to grab from the user. Typically can be ["profile", "email", "groups"] |
+| oidc.rootCAFile             | No | | The root Certificate Authority used to validate the HTTPS echange with the Issuer URL (Not needed if the Issuer URL is HTTP) |
+| oidc.loginURLOverride       | No | | Allow override of scheme and host:port of the user login URL. See below |
+| oidc.debug                  | No | False | Add a bunch of message for OIDC exchange. Quite verbose. To use only for debuging |
+| passthroughs                | No | | A list or URL Path which will go through `dexgate` without any authorisation. A typical usage is to set  |
 | tokenDisplay                |   | | |
 | sessionConfig.idleTimeout   |   | | |
 | sessionConfig.lifeTime      |   | | |

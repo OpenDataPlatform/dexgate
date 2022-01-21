@@ -53,7 +53,7 @@ func Setup() {
 	pflag.StringVar(&logMode, "logMode", "json", "Log mode: 'dev' or 'json'")
 	pflag.StringVar(&bindAddr, "bindAddr", ":9001", "The address to listen on.")
 	pflag.StringVar(&targetUrl, "targetUrl", "", "All requests will be forwarded to this URL")
-	pflag.BoolVar(&oidcDebug, "", false, "Print all request and responses from the OpenID Connect issuer.")
+	pflag.BoolVar(&oidcDebug, "oidcDebug", false, "Print all request and responses from the OpenID Connect issuer.")
 	pflag.BoolVar(&tokenDisplay, "tokenDisplay", false, "Display an intermediate token page after login (Debugging only).")
 	pflag.StringVar(&idleTimeout, "idleTimeout", "15m", "The maximum length of time a session can be inactive before being expired")
 	pflag.StringVar(&sessionLifetime, "sessionLifetime", "6h", "The absolute maximum length of time that a session is valid.")
