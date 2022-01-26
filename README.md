@@ -59,6 +59,15 @@ The main reason for such separation is that the configuration has no reason to c
 
 The default configuration file is `config.yml`. Its name and path can be overriden using the `--config` parameter.
 
+
+| Name                        |req.| Default    | Description                                                                                         |
+|-----------------------------|- --|------------|-----------------------------------------------------------------------------------------------------|
+| N/A                         | No | config.yml | Path of the main config file hosting the below parameters                                           |
+
+
+xxxxxxxxxxxxxxx
+
+
 | Name                        |req.| Default | Description                                                                                                 |
 |-----------------------------|- --|----|-------------------------------------------------------------------------------------------------------------|
 | N/A                         | No | config.yml | Path of the main config file hosting the below parameters                                           |
