@@ -1,5 +1,24 @@
 # Dexgate, an OIDC authentication proxy. 
 
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+## Index
+
+- [Overview](#overview)
+- [How it works](#how-it-works)
+  - [Alternate interaction](#alternate-interaction)
+  - [Initialisation:](#initialisation)
+- [Configuration](#configuration)
+  - [Entry points](#entry-points)
+  - [Users permissions](#users-permissions)
+  - [Command line](#command-line)
+- [The Issuer URL.](#the-issuer-url)
+  - [login URL overriding](#login-url-overriding)
+- [Deployment](#deployment)
+- [Components](#components)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 ## Overview
 
 `Dexgate` is a reverse proxy intended to authenticate access to a web front end.
@@ -38,7 +57,8 @@ Based on this information, user access is validated.
 
 A more formal description of this could be find [here](docs/dexgate-Sequence.jpg)
 
-Alternate interaction:
+### Alternate interaction
+
 - If the user is not authenticated in step 5, `dex` will resend the login page.
 - If the user is authenticated but its profile does not allow `dexgate` to grant access in step 8, it will be redirected to an 'allowed' page. 
 
@@ -48,7 +68,8 @@ An OIDC server provide a set of entry points for different action (User login in
 
 Fortunately, for an administrator, there is only one to define: the so called `issuer URL`. 
 
-When `dexgate` start, it will retrieve  the OIDC configuration from a 'well known' path, based on this `issuer URL`. 
+When `dexgate` start, it will retrieve  the OIDC configuration from a 'well known' path, based on this `issuer URL`.
+
 For example, if the issuer URL is  `https://dex.ingress.my.cluster.com/dex`, it will send a request to `https://dex.ingress.my.cluster.com/dex/.well-known/openid-configuration`
 
 ## Configuration
@@ -61,8 +82,7 @@ The default configuration file is `config.yml`. Its name and path can be overrid
 
 | Name                        | req. | Default     | Description                                                                                                                                                                                                       |
 |-----------------------------|------|-------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| N/A                         | No   | config.yml  | Path of the main config file hosting the below parameters.                                                                                                                                                        |
-| logLevel                    | No   | INFO        | Log level (PANIC,FATAL,ERROR,WARN,INFO,DEBUG,TRACE)                                                                                                                                                               |
+| logLevel                    | No   | INFO        | Log level (PANIC, FATAL, ERROR, WARN, INFO, DEBUG, TRACE)                                                                                                                                                         |
 | logMode                     | No   | json        | In which form log are generated:<br>- `json`: Appropriate for further indexing.<br>- `dev`: More human readable                                                                                                   |
 | bindAddr                    | No   | :9001       | The address `dexgate` will be listening on.                                                                                                                                                                       |
 | targetURL                   | Yes  |             | The URL of the targeted web application. Typically, refer to a K8s Service                                                                                                                                        |
@@ -75,17 +95,18 @@ The default configuration file is `config.yml`. Its name and path can be overrid
 | oidc.loginURLOverride       | No   |             | Allow override of `scheme` and `host:port` of the user login URL. See below                                                                                                                                       |
 | oidc.debug                  | No   | False       | Add a bunch of message for OIDC exchange. Quite verbose. To use only for debuging                                                                                                                                 |
 | passthroughs                | No   | []          | A list or URL Path which will go through `dexgate` without any authorisation. A typical usage is to set to [ "/favicon.ico" ]                                                                                     |
-| tokenDisplay                | No   | False       | Display an intermediate page after login providing token values and associated information. For debugging only.                                                                                                   |
+| tokenDisplay                | No   | False       | Display an intermediate page after login, providing tokens values and associated information. For debugging only.                                                                                                 |
 | sessionConfig.idleTimeout   | No   | 15m         | The maximum time a session can be inactive before being expired                                                                                                                                                   |
 | sessionConfig.lifeTime      | No   | 6h          | The absolute maximum time that a session is valid.                                                                                                                                                                |
 | userConfigFile              | No   |             | The path (Relative to config file) providing users permissions (Exclusive from `userConfigMap.*` parameter)                                                                                                       |
-| userConfigMap.configMapName | No   |             | The name of the Kubernetes configMap hosting the users permissions. Refer to dedicated chapter below. (Exclusive from `userConfigFile` parameter)                                                                 |
+| userConfigMap.configMapName | No   |             | The name of the Kubernetes configMap hosting the users permissions. (Exclusive from `userConfigFile` parameter). See                                                                                              |
 | userConfigMap.namespace     | No   | Current ns  | The namespace of the above configMap. Default to the `dexgate`'s one.                                                                                                                                             |
 | userConfigMap.configMapKey  | No   | users.yml   | The key inside the configMap hosting the users permissions.                                                                                                                                                       |
 
 Here is a sample of a minimalist config file:
 
 ```
+---
 logLevel:   "INFO"
 targetURL: "http://apache2.apachenamespace.svc:80"
 passthroughs: [ "/favicon.ico" ]
@@ -149,7 +170,7 @@ Only one of these configuration must be used.
 In both case, `Dexgate` provide a 'hot reload' mechanisme, watching for any change to immediately reload the configuration. Note the following:
 
 - Existing sessions are not impacted by such reload.
-- Only this `users.yml` file/configMap is dynamicaly reloaded. Dexgate need to be restarted to take in account any modification in this main `config.yml` file. 
+- Only this `users.yml` file/configMap is dynamicaly reloaded. Dexgate needs to be restarted to take in account any modification in this main `config.yml` file. 
 - In a Kubernetes context, the usual practice would be to mount a configMap as a volume and use the `userConfigFile` parameter to point on it. But the file watcher will not work with such mount.
 This is why a configMap watcher has been implemented and the recommended pattern in kubernetes is to use the `userConfigMap.name/namespace/key` parameters.
 
@@ -179,13 +200,13 @@ Usage of ../../dexgate/bin/dexgate:
 
 ## The Issuer URL.
 
-A stated above, one of the main configuration parameter is the 'Issuer URL' 
+A stated above, one of the main configuration parameter is the `Issuer URL` 
 
 - This URL must be defined both in `dex` and `dexgate` configuration with the same value.
 - All other endpoints are based on this issuer URL (Same scheme and host).
 - As the user login URL is based on, this URL must be reachable from outside the kubernetes cluster.
 
-This last constraint means the issuer URL will typically be handled by the entry load balancer/ingress controler. 
+This last constraint means the `issuer URL` will typically be handled by the entry load balancer/ingress controler. 
 And, as there is only one configuration value, this means the connexion between `dexgate` and `dex` will also go through this path. 
 So, the effective interaction is more like the following:
 
@@ -195,10 +216,10 @@ So, the effective interaction is more like the following:
 
 There may be some network configuration where such path will not work. It may be impossible for a pod to reach another one by using the external entry point, as depicted above.
 
-In such case, a specific parameter has been added to override the URL sent to the user for the login. To use it, the Issuer URL must be defined using the kubernetes internal `dex` address,
+In such case, a specific parameter has been added to override the URL sent to the user for the login. To use it, the `Issuer URL` must be defined using the kubernetes internal `dex` address,
 like `http://dex.<dexnamespace>.svc:5556/dex`. Doing so, the communication between `dexgate` and `dex` will be direct, as in the first picture. 
 
-But, the login url which is also based on this adress, will be unreachable from outside the Kubernetes context. To fix this, add the following in the configuration:
+But, the login URL which is also based on this adress, will be unreachable from outside the Kubernetes context. To fix this, add the following in the configuration:
 
 ```
 oidc:
