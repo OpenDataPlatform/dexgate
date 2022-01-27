@@ -1,0 +1,44 @@
+
+logMode: "json"
+logLevel: "INFO"
+image: ghcr.io/opendataplatform/dexgate:v0.1.1
+imagePullPolicy: Always
+imagePullSecrets: []
+resources: {}
+
+proxy:
+  # Required: The URL of the targeted web application. Typically, refer to a K8s Service
+  targetURL:
+
+ingress:
+  class: nginx
+  # Required: The ingress FQDN
+  host:
+  # Will setup HTTPS if defined
+  clusterIssuer:
+
+oidc:
+  # Following three parameters are mandatory, and must match dex configuration?
+  clientID:
+  clientSecret:
+  issuerURL:
+  debug: false
+  #
+  # This parameter is required if the dex server is secured (https)
+  # crt is base64 encoded certificate
+  ca:
+    crt:
+  #
+  # Allow overriding of the user login URL. See doc
+  # loginURLOverride:
+  #
+  # Following is to allow automatic creation of client configuration in Dex
+  # See https://github.com/OpenDataPlatform/dexi2n
+  # dexNamespace:
+  # encodedClientID:
+
+
+users:
+  allowedUsers: []
+  allowedGroups: []
+  allowedEmails: []

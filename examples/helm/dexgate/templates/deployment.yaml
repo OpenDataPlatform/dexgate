@@ -1,0 +1,76 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dexgate
+  namespace: {{ .Release.Namespace  }}
+  labels:
+    app: dexgate
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dexgate
+  template:
+    metadata:
+      labels:
+        app: dexgate
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{ with .Values.serviceAccountName }}
+      serviceAccountName: {{ . }}
+      {{ end }}
+      containers:
+      - name: dexgate
+        args:
+          - --config
+          - /conf/config.yml
+{{ if .Values.oidc.ca.crt }}
+          - --oidcRootCAFile
+          - /issuerca/ca.crt
+{{ end }}
+        image: {{ .Values.image }}
+        imagePullPolicy: {{ .Values.imagePullPolicy }}
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+        ports:
+          - containerPort: 9001
+            name: http
+            protocol: TCP
+        resources:
+          {{ toYaml .Values.resources | nindent 10 }}
+        volumeMounts:
+          - mountPath: /conf
+            name: configmap-config
+{{ if .Values.oidc.ca.crt }}
+          - mountPath: /issuerca
+            name: issuer-ca
+{{ end }}
+      volumes:
+      - name: configmap-config
+        configMap:
+          name: dexgate-config
+          defaultMode: 420
+          items:
+          - key: config.yml
+            mode: 420
+            path: config.yml
+{{ if .Values.oidc.ca.crt }}
+      - name: issuer-ca
+        secret:
+          secretName: dexgate-oidc-ca
+          defaultMode: 420
+          items:
+            - key: ca.crt
+              mode: 420
+              path: ca.crt
+{{ end }}
+
+
+

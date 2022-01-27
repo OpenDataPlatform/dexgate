@@ -1,0 +1,11 @@
+{{ if .Values.oidc.ca.crt }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: dexgate-oidc-ca
+  namespace: {{ .Release.Namespace  }}
+data:
+  ca.crt: {{ .Values.oidc.ca.crt }}
+
+{{ end }}

@@ -129,6 +129,7 @@ The user permissions yaml is just made of 3 entries:
 Here is a simple sample:
 
 ```
+---
 allowedUsers:
 - "Adam SMITH"
 - "Karl MARX"
@@ -207,6 +208,11 @@ This will override the login URL. Note than only the scheme and host part (Inclu
 
 ## Deployment
 
+A example Helm chart is provided in the `example` folder. This is the easiest way to deploy `dexgate`
+
+Use this as a starting point. You may need to adjust this chart to your own needs.
+
+Also note this chart is optionally able to automatically declare the client configuration in the `dex` server, under some condition. More in this can be found [here](https://github.com/OpenDataPlatform/dexi2n)
 
 ## Components
 

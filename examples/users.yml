@@ -1,0 +1,8 @@
+---
+allowedUsers:
+  - "Adam SMITH"
+  - "Karl MARX"
+allowedGroups:
+  - developers
+allowedEmails:
+  - "theboss@mycompany.com"

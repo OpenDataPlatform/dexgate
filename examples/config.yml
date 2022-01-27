@@ -1,0 +1,16 @@
+---
+logLevel:   "INFO"
+targetURL: "http://apache2.apachenamespace.svc:80"
+passthroughs: [ "/favicon.ico" ]
+usersConfigFile: users.yml
+oidc:
+  clientID: dexgate
+  clientSecret: qh8CIbdJbTYg64rtrzZ5NMg
+  issuerURL: https://dex.mycluster.mycompany.com/dex
+  redirectURL: https://apache.ingress.mycluster.mycompany.com/dg_callback
+  rootCAFile: ca.crt
+  scopes:
+    - profile
+    - groups
+    - email
+
