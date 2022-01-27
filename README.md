@@ -59,33 +59,66 @@ The main reason for such separation is that the configuration has no reason to c
 
 The default configuration file is `config.yml`. Its name and path can be overriden using the `--config` parameter.
 
+| Name                        | req. | Default     | Description                                                                                                                                                                                                      |
+|-----------------------------|------|-------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| N/A                         | No   | config.yml  | Path of the main config file hosting the below parameters                                                                                                                                                        |
+| logLevel                    | No   | INFO        | Log level (PANIC,FATAL,ERROR,WARN,INFO,DEBUG,TRACE)                                                                                                                                                              |
+| logMode                     | No   | json        | In which form log are generated:<br>`json`: Appropriate for further indexing.<br>`dev`: More human readable                                                                                                      |
+| bindAddr                    | No   | :9001       | The address `dexgate` will be listening on.                                                                                                                                                                      |
+| targetURL                   | Yes  |             | The URL of the targeted web application. Typically, refer to a K8s Service                                                                                                                                       |
+| oidc.clientID               | Yes  |             | OAuth2 client ID of this application.                                                                                                                                                                            |
+| oidc.clientSecret           | Yes  |             | The secret associated to this clientID                                                                                                                                                                           |
+| oidc.issuerURL              | Yes  |             | The OIDC server main URL entry. See above                                                                                                                                                                        |
+| oidc.redirectURL            | Yes  |             | Where the OIDC server will redirect the user once authenticated. Must ends with `/dg_callback` (See 'entry points' below). For security reasons, this URL must be also provided in the OIDC server configuration. |
+| oidc.scopes                 | No   | ["profile"] | A list of string defining the type of user information we want to grab from the user. Typically can be ["profile", "email", "groups"]                                                                            |
+| oidc.rootCAFile             | No   |             | The root Certificate Authority used to validate the HTTPS echange with the Issuer URL (Not needed if the Issuer URL is HTTP)                                                                                     |
+| oidc.loginURLOverride       | No   |             | Allow override of scheme and host:port of the user login URL. See below                                                                                                                                          |
+| oidc.debug                  | No   | False       | Add a bunch of message for OIDC exchange. Quite verbose. To use only for debuging                                                                                                                                |
+| passthroughs                | No   | []          | A list or URL Path which will go through `dexgate` without any authorisation. A typical usage is to set to [ "/favicon.ico" ]                                                                                    |
+| tokenDisplay                | No   | False       | Display an intermediate page after login providing token values and associated information. For debugging only.                                                                                                  |
+| sessionConfig.idleTimeout   | No   | 15m         | The maximum length of time a session can be inactive before being expired                                                                                                                                        |
+| sessionConfig.lifeTime      | No   | 6h          | The absolute maximum length of time that a session is valid.                                                                                                                                                     |
+| userConfigFile              | No   |             | The path (Relative to config file) providing users permissions                                                                                                                                                   |
+| userConfigMap.configMapName | No   |             | The name of the Kubernetes configMap hosting the users permissions. Refer to dedicated chapter below.                                                                                                            |
+| userConfigMap.namespace     | No   |             | The namespace of the above configMap.                                                                                                                                                                            |
+| userConfigMap.configMapKey  | No   |             | The key inside the configMap hosting the users permissions.                                                                                                                                                      |
+
+Here is a sample of a minimalist config file:
+
+```
+logLevel:   "INFO"
+targetURL: "http://apache2.apachenamespace.svc:80"
+passthroughs: [ "/favicon.ico" ]
+usersConfigFile: users.yml
+oidc:
+  clientID: dexgate
+  clientSecret: qh8CIbdJbTYg64rtrzZ5NMg
+  issuerURL: https://dex.mycluster.mycompany.com/dex
+  redirectURL: https://apache.ingress.mycluster.mycompany.com/dg_callback
+  rootCAFile: ca.crt
+  scopes:
+    - profile
+    - groups
+    - email
+```
+### Entry points
+
+Dexgate offer several entry points:
+
+| Name          | Usage                                                                                                                              |
+|---------------|------------------------------------------------------------------------------------------------------------------------------------|
+| /dg_callback  | This is where the OIDC server will redirect the user on successful authentication                                                  |
+| /dg_unallowed | This is where dexgate redirect the user when not granted to access the required resource                                           |
+| /dg_logout    | This URL may be called explicitly to clear the current HTTP session.                                                               |
+| /dg_info      | This URL may be called explicitly to display user's token information. Debugging usage                                             |
+| /*            | All others path will be forwaded the the target site if there is an HTTP session. Otherwise, the authentication process is started |
+
+### Users authorisation
 
 
-| Name                        | req. | Default     | Description                                                                                                                                             |
-|-----------------------------|------|-------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
-| N/A                         | No   | config.yml  | Path of the main config file hosting the below parameters                                                                                               |
-| logLevel                    | No   | INFO        | Log level (PANIC,FATAL,ERROR,WARN,INFO,DEBUG,TRACE)                                                                                                     |
-| logMode                     | No   | json        | In which form log are generated:<br>`json`: Appropriate for further indexing.<br>`dev`: More human readable                                             |
-| bindAddr                    | No   | :9001       | The address `dexgate` will be listening on.                                                                                                             |
-| targetURL                   | Yes  |             | The URL of the targeted web application. Typically, refer to a K8s Service                                                                              |
-| oidc.clientID               | Yes  |             | OAuth2 client ID of this application.                                                                                                                   |
-| oidc.clientSecret           | Yes  |             | The secret associated to this clientID                                                                                                                  |
-| oidc.issuerURL              | Yes  |             | The OIDC server main URL entry. See above                                                                                                               |
-| oidc.redirectURL            | Yes  |             | Where the OIDC server will redirect the user once authenticated. For security reasons, this URL must be also provided in the OIDC server configuration. |
-| oidc.scopes                 | No   | ["profile"] | A list of string defining the type of user information we want to grab from the user. Typically can be ["profile", "email", "groups"]                   |
-| oidc.rootCAFile             | No   |             | The root Certificate Authority used to validate the HTTPS echange with the Issuer URL (Not needed if the Issuer URL is HTTP)                            |
-| oidc.loginURLOverride       | No   |             | Allow override of scheme and host:port of the user login URL. See below                                                                                 |
-| oidc.debug                  | No   | False       | Add a bunch of message for OIDC exchange. Quite verbose. To use only for debuging                                                                       |
-| passthroughs                | No   | []          | A list or URL Path which will go through `dexgate` without any authorisation. A typical usage is to set to [ "/favicon.ico" ]                           |
-| tokenDisplay                | No   | False       | Display an intermediate page after login providing token values and associated information. For debugging only.                                         |
-| sessionConfig.idleTimeout   |      |             |                                                                                                                                                         |
-| sessionConfig.lifeTime      |      |             |                                                                                                                                                         |
-| userConfigFile              |      |             |                                                                                                                                                         |
-| userConfigMap.namespace     |      |             |                                                                                                                                                         |
-| userConfigMap.configMapName |      |             |                                                                                                                                                         |
-| userConfigMap.configMapKey  |      |             |                                                                                                                                                         |
 
 
+### Command line
 
 Also, some of the configuration parameters can be overriden on the command line:
 
@@ -108,9 +141,6 @@ Usage of ../../dexgate/bin/dexgate:
 --usersConfigMapKey string         Users/Groups permission key in configMap. (default "users.yml")
 --loginURLOverride string          Allow overriding of scheme and host part of the login URL provided by the OIDC server.
 ```
-
-
-## Users authorisation Hot Reload
 
 
 ## The Issuer URL.
