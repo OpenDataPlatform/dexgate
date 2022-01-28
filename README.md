@@ -12,8 +12,8 @@
   - [Entry points](#entry-points)
   - [Users permissions](#users-permissions)
   - [Command line](#command-line)
-- [The Issuer URL.](#the-issuer-url)
-  - [login URL overriding](#login-url-overriding)
+  - [The Issuer URL.](#the-issuer-url)
+    - [login URL overriding](#login-url-overriding)
 - [Deployment](#deployment)
 - [Components](#components)
 
@@ -198,7 +198,7 @@ Usage of ../../dexgate/bin/dexgate:
 --loginURLOverride string          Allow overriding of scheme and host part of the login URL provided by the OIDC server.
 ```
 
-## The Issuer URL.
+### The Issuer URL.
 
 A stated above, one of the main configuration parameter is the `Issuer URL` 
 
@@ -212,7 +212,7 @@ So, the effective interaction is more like the following:
 
 ![](docs/dexgate-Overview2.jpg)
 
-### login URL overriding
+#### login URL overriding
 
 There may be some network configuration where such path will not work. It may be impossible for a pod to reach another one by using the external entry point, as depicted above.
 
