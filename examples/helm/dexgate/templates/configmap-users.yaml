@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dexgate-users
+  namespace: {{ .Release.Namespace  }}
+data:
+  users.yml: |
+    ---
+    {{- toYaml .Values.users | nindent 4 }}
+
