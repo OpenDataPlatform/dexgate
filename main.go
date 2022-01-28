@@ -129,7 +129,7 @@ func callbackHandler(sessionManager *scs.SessionManager, oidcApp *oidcapp.OidcAp
 		}
 		landingURL := sessionManager.GetString(r.Context(), landingURLKey)
 		if !logged {
-			// We can reder the unallowed template here. But we prefer to issue a redirect, to clean address bar from redirect callback url.
+			// We could render the unallowed template here. But we prefer to issue a redirect, to clean address bar from redirect callback url.
 			http.Redirect(w, r, "dg_unallowed", http.StatusSeeOther)
 		} else {
 			sessionManager.Put(r.Context(), accessTokenKey, tokenData.AccessToken)
