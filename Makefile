@@ -21,5 +21,5 @@ docker-push:
 
 docker: docker-build docker-push
 
-doctoc:
+doc:
 	doctoc README.md --github --title '## Index'

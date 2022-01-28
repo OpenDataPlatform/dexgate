@@ -273,7 +273,7 @@ Mostly based on the [Dex example application](https://github.com/dexidp/dex/tree
 
 - The standard [Golang reverse proxy feature](https://pkg.go.dev/net/http/httputil#ReverseProxy)
 - The standard [OAuth2 library](https://pkg.go.dev/golang.org/x/oauth2)
-- The [OIDC library used by `dex`](https://github.com/coreos/go-oidc)
+- The [coreos OIDC library used by `dex`](https://github.com/coreos/go-oidc)
 - The [alexedwards HTTP session management library](https://github.com/alexedwards/scs)
 
 Thanks to all of them.
