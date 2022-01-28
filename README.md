@@ -241,7 +241,7 @@ There may be some network configuration where such path will not work. It may be
 So, the solution is to define the `Issuer URL` using the kubernetes internal `dex` service address, like `http://dex.<dexnamespace>.svc:5556/dex`. 
 Doing so, the communication between `dexgate` and `dex` will be direct, as in the first picture.
 
-But, the login URL which is also based on this adress, will be unreachable from outside the Kubernetes context. 
+**But, the login URL which is also based on this adress, will be unreachable from outside the Kubernetes context.**
 
 To fix this, a specific parameter has been added to override the URL sent to the user for the login. Add the following in the configuration:
 
@@ -258,16 +258,18 @@ A example Helm chart is provided in the `example` folder. This is the easiest wa
 
 Use this as a starting point. You may need to adjust this chart to your own needs.
 
-Also you will need to define `dexgate` as a client in the `dex` configuration. This can be achieved by:
-- 
+Also you will need to define `dexgate` as a client in the `dex` configuration. This can be achieved by one of the following :
+ 
 - Defining an entry in the `staticClients` list of the `dex` configuration.
 - Using the dex gRPC API, which allow dynamic client creation.
-- Provide `dexNamespace` and `encodedClientID` information is the values.yaml file. This will generate a OAuth2Client kubernetes resource. 
+- Providing `dexNamespace` and `encodedClientID` information is the `values.yaml` file. This will generate a OAuth2Client kubernetes resource. 
 More information on this can be found [here](https://github.com/OpenDataPlatform/dexi2n)
 
 ## Components
 
-`Dexgate` is in fact mainly the integration of pre-existing components. Mostly based on the [Dex example application](https://github.com/dexidp/dex/tree/master/examples/example-app), it also uses : 
+`Dexgate` is in fact mainly the integration of pre-existing components.
+
+Mostly based on the [Dex example application](https://github.com/dexidp/dex/tree/master/examples/example-app), it also uses : 
 
 - The standard [Golang reverse proxy feature](https://pkg.go.dev/net/http/httputil#ReverseProxy)
 - The standard [OAuth2 library](https://pkg.go.dev/golang.org/x/oauth2)
