@@ -1,0 +1,38 @@
+{{ if .Values.ingress.host }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: dexgate
+  namespace: {{ .Release.Namespace  }}
+  annotations:
+    kubernetes.io/ingress.class: {{ .Values.ingress.class }}
+{{ if .Values.ingress.clusterIssuer }}
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: {{ .Values.ingress.clusterIssuer }}
+{{ else }}
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "false"
+{{ end }}
+  labels:
+    app: dexgate
+spec:
+  rules:
+    - host: {{ .Values.ingress.host }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: dexgate
+                port:
+                  number: 9001
+  {{ if .Values.ingress.clusterIssuer }}
+  tls:
+    - hosts:
+        - {{ .Values.ingress.host }}
+      secretName: dexgate-tls
+  {{ end }}
+
+{{ end }}
+

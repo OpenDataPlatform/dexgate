@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dexgate-config
+  namespace: {{ .Release.Namespace  }}
+data:
+  config.yml: |
+    ---
+    logMode: {{ .Values.logMode }}
+    logLevel:   "{{ .Values.logLevel }}"
+    targetURL: "{{ .Values.proxy.targetURL }}"
+    passthroughs: [ "/favicon.ico" ]
+    tokenDisplay: False
+    usersConfigMap:
+      configMapName: dexgate-users
+    oidc:
+      clientID: {{ .Values.oidc.clientID }}
+      clientSecret: {{ .Values.oidc.clientSecret }}
+      issuerURL: {{ .Values.oidc.issuerURL }}
+      redirectURL: https://{{ .Values.ingress.host }}/dg_callback
+      {{ with .Values.oidc.loginURLOverride }}
+      loginURLOverride: {{ . }}
+      {{ end }}
+      scopes:
+        - profile
+        - groups
+        - email
+      debug: {{ .Values.oidc.debug }}

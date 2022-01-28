@@ -20,3 +20,6 @@ docker-push:
 	docker push ${IMG}
 
 docker: docker-build docker-push
+
+doc:
+	doctoc README.md --github --title '## Index'
