@@ -15,11 +15,6 @@ import (
 	"strings"
 )
 
-/*
-TODO
-- Perform retry to allow late Dex startup (Or let K8S handle this case)
-- Documentation
-*/
 var log *logrus.Entry
 
 //func dumpHeader(r *http.Request) {
