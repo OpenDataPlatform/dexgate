@@ -4,7 +4,7 @@ metadata:
   name: dexgate-config
   namespace: {{ .Release.Namespace  }}
 data:
-  config.yml: |
+  config.yaml: |
     ---
     logMode: {{ .Values.logMode }}
     logLevel:   "{{ .Values.logLevel }}"
@@ -14,13 +14,21 @@ data:
     usersConfigMap:
       configMapName: dexgate-users
     oidc:
-      clientID: {{ .Values.oidc.clientID }}
-      clientSecret: {{ .Values.oidc.clientSecret }}
+      {{- if .Values.oidc.clientID.secret.name }}
+      clientIDEnv: CLIENT_ID
+      {{- else }}
+      clientID: {{ required "Missing clientID" .Values.oidc.clientID.value }}
+      {{- end }}
+      {{- if .Values.oidc.clientSecret.secret.name }}
+      clientSecretEnv: CLIENT_SECRET
+      {{- else }}
+      clientSecret: {{ required "Missing clientSecret" .Values.oidc.clientSecret.value }}
+      {{- end }}
       issuerURL: {{ .Values.oidc.issuerURL }}
       redirectURL: https://{{ .Values.ingress.host }}/dg_callback
-      {{ with .Values.oidc.loginURLOverride }}
+      {{- with .Values.oidc.loginURLOverride }}
       loginURLOverride: {{ . }}
-      {{ end }}
+      {{- end }}
       scopes:
         - profile
         - groups

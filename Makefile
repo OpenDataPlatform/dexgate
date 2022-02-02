@@ -1,5 +1,5 @@
 # Image URL to use all building/pushing image targets
-VERSION ?= v0.1.1
+VERSION ?= v0.1.2
 IMG ?= ghcr.io/opendataplatform/dexgate:$(VERSION)
 
 

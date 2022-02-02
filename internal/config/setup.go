@@ -119,12 +119,30 @@ func Setup() {
 		os.Exit(2)
 	}
 	// ------------------------- Handle Oidc config stuff
-	if Conf.OidcConfig.ClientID == "" {
-		missingParameter("oidcConfig.clientID")
+	if (Conf.OidcConfig.ClientID == "") == (Conf.OidcConfig.ClientIDEnv == "") {
+		_, _ = fmt.Fprintf(os.Stderr, "ERROR: One and only one of oidc.clientID and oidc.clientIDEnv must be defined in configuration\n")
+		os.Exit(2)
 	}
-	if Conf.OidcConfig.ClientSecret == "" {
-		missingParameter("oidcConfig.clientSecret")
+	if Conf.OidcConfig.ClientIDEnv != "" {
+		Conf.OidcConfig.ClientID = os.Getenv(Conf.OidcConfig.ClientIDEnv)
+		if Conf.OidcConfig.ClientID == "" {
+			_, _ = fmt.Fprintf(os.Stderr, "ERROR: '%s' environement variable is unset or empty\n", Conf.OidcConfig.ClientIDEnv)
+			os.Exit(2)
+		}
 	}
+
+	if (Conf.OidcConfig.ClientSecret == "") == (Conf.OidcConfig.ClientSecretEnv == "") {
+		_, _ = fmt.Fprintf(os.Stderr, "ERROR: One and only one of oidc.clientSecret and oidc.clientSecretEnv must be defined in configuration\n")
+		os.Exit(2)
+	}
+	if Conf.OidcConfig.ClientSecretEnv != "" {
+		Conf.OidcConfig.ClientSecret = os.Getenv(Conf.OidcConfig.ClientSecretEnv)
+		if Conf.OidcConfig.ClientSecret == "" {
+			_, _ = fmt.Fprintf(os.Stderr, "ERROR: '%s' environement variable is unset or empty\n", Conf.OidcConfig.ClientSecretEnv)
+			os.Exit(2)
+		}
+	}
+
 	if Conf.OidcConfig.IssuerURL == "" {
 		missingParameter("oidcConfig.issuerURL")
 	}

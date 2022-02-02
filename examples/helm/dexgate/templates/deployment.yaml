@@ -27,7 +27,7 @@ spec:
       - name: dexgate
         args:
           - --config
-          - /conf/config.yml
+          - /conf/config.yaml
 {{ if .Values.oidc.ca.crt }}
           - --oidcRootCAFile
           - /issuerca/ca.crt
@@ -39,6 +39,21 @@ spec:
           capabilities:
             drop:
               - ALL
+        env:
+          {{ if .Values.oidc.clientID.secret.name }}
+          - name: CLIENT_ID
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.oidc.clientID.secret.name}}
+                key: {{ .Values.oidc.clientID.secret.key }}
+          {{ end }}
+          {{ if .Values.oidc.clientSecret.secret.name }}
+          - name: CLIENT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.oidc.clientSecret.secret.name }}
+                key: {{ .Values.oidc.clientSecret.secret.key }}
+          {{ end }}
         ports:
           - containerPort: 9001
             name: http
@@ -58,9 +73,9 @@ spec:
           name: dexgate-config
           defaultMode: 420
           items:
-          - key: config.yml
+          - key: config.yaml
             mode: 420
-            path: config.yml
+            path: config.yaml
 {{ if .Values.oidc.ca.crt }}
       - name: issuer-ca
         secret:

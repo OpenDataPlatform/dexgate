@@ -15,11 +15,6 @@ import (
 	"strings"
 )
 
-/*
-TODO
-- Perform retry to allow late Dex startup (Or let K8S handle this case)
-- Documentation
-*/
 var log *logrus.Entry
 
 //func dumpHeader(r *http.Request) {
@@ -129,7 +124,7 @@ func callbackHandler(sessionManager *scs.SessionManager, oidcApp *oidcapp.OidcAp
 		}
 		landingURL := sessionManager.GetString(r.Context(), landingURLKey)
 		if !logged {
-			// We can render the unallowed template here. But we prefer to issue a redirect, to clean address bar from redirect callback url.
+			// We could render the unallowed template here. But we prefer to issue a redirect, to clean address bar from redirect callback url.
 			http.Redirect(w, r, "dg_unallowed", http.StatusSeeOther)
 		} else {
 			sessionManager.Put(r.Context(), accessTokenKey, tokenData.AccessToken)

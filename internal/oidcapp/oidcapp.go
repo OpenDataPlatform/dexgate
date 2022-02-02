@@ -114,7 +114,7 @@ func httpClientForRootCAs(rootCAs string) (*http.Client, error) {
 	if !tlsConfig.RootCAs.AppendCertsFromPEM(rootCABytes) {
 		return nil, fmt.Errorf("no certs found in root CA file %q", rootCAs)
 	}
-	config.Log.Debugf("CA file '%s' loaded successfully.", rootCAs)
+	config.Log.Infof("CA file '%s' loaded successfully.", rootCAs)
 	return &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tlsConfig,
