@@ -4,7 +4,7 @@ metadata:
   name: dexgate-config
   namespace: {{ .Release.Namespace  }}
 data:
-  config.yml: |
+  config.yaml: |
     ---
     logMode: {{ .Values.logMode }}
     logLevel:   "{{ .Values.logLevel }}"

@@ -27,7 +27,7 @@ spec:
       - name: dexgate
         args:
           - --config
-          - /conf/config.yml
+          - /conf/config.yaml
 {{ if .Values.oidc.ca.crt }}
           - --oidcRootCAFile
           - /issuerca/ca.crt
@@ -73,9 +73,9 @@ spec:
           name: dexgate-config
           defaultMode: 420
           items:
-          - key: config.yml
+          - key: config.yaml
             mode: 420
-            path: config.yml
+            path: config.yaml
 {{ if .Values.oidc.ca.crt }}
       - name: issuer-ca
         secret:
