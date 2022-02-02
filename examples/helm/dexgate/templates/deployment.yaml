@@ -39,6 +39,21 @@ spec:
           capabilities:
             drop:
               - ALL
+        env:
+          {{ if .Values.oidc.clientID.secret.name }}
+          - name: CLIENT_ID
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.oidc.clientID.secret.name}}
+                key: {{ .Values.oidc.clientID.secret.key }}
+          {{ end }}
+          {{ if .Values.oidc.clientSecret.secret.name }}
+          - name: CLIENT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.oidc.clientSecret.secret.name }}
+                key: {{ .Values.oidc.clientSecret.secret.key }}
+          {{ end }}
         ports:
           - containerPort: 9001
             name: http

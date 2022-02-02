@@ -5,12 +5,12 @@ kind: OAuth2Client
 metadata:
   name: {{ .Values.oidc.encodedClientID }}
   namespace: {{ .Values.oidc.dexNamespace }}
-id: {{ .Values.oidc.clientID }}
-name: {{ .Values.oidc.clientID }}
+name: {{ required "oidc.clientID.value is required if oidc.encodedClientID is defined" .Values.oidc.clientID.value }}
+id: {{ .Values.oidc.clientID.value }}
+secret: {{  required "oidc.clientSecret.value is required if oidc.encodedClientID is defined" .Values.oidc.clientSecret.value }}
 public: false
 redirectURIs:
   - https://{{ .Values.ingress.host }}/dg_callback
-secret: {{ .Values.oidc.clientSecret }}
 
 {{ end }}
 

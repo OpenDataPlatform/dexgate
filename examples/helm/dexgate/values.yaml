@@ -1,7 +1,7 @@
 
 logMode: "json"
 logLevel: "INFO"
-image: ghcr.io/opendataplatform/dexgate:v0.1.1
+image: ghcr.io/opendataplatform/dexgate:v0.1.2
 imagePullPolicy: Always
 imagePullSecrets: []
 resources: {}
@@ -18,22 +18,70 @@ ingress:
   clusterIssuer:
 
 oidc:
-  # Following three parameters are mandatory, and must match dex configuration?
+  # There is 3 pattern to define clientID and clientSecret
+  # 1) Simple but unsecure (As value will be stored in some VCS)
+  # clientID:
+  #   value: <valueInClearText>
+  # clientSecret:
+  #   value: <valueInClearText>
+  # 2) The standard one: The value is in a secret generated outside the chart, in a secured way.
+  #    We just provide a pointer on this secret.
+  # clientID:
+  #   secret:
+  #     name: dexgate-client
+  #     key: clientID
+  # clientSecret:
+  #   secret:
+  #     name: dexgate-client
+  #     key: clientSecret
+  # 3) Using secret, but this secret will be created by this helm chart, using the provided value
+  #    This is as unsecure as the first pattern, but may be useful in intermediate setup stage
+  # clientID:
+  #   value: <valueInClearText>
+  #   secret:
+  #     name: dexgate-client
+  #     key: clientID
+  # clientSecret:
+  #   value: <valueInClearText>
+  #   secret:
+  #     name: dexgate-client
+  #     key: clientSecret
+  #
+  # The following is also possible, where only clientSecret is protected:
+  # clientID:
+  #   value: <valueInClearText>
+  # clientSecret:
+  #   secret:
+  #     name: dexgate-client
+  #     key: clientSecret
+
   clientID:
+    value:
+    secret:
+      name:
+      key:
   clientSecret:
+    value:
+    secret:
+      name:
+      key:
+  # Must match the value defined in Dex
   issuerURL:
-  debug: false
   #
   # This parameter is required if the dex server is secured (https)
   # crt is base64 encoded certificate
   ca:
     crt:
   #
+  # Display OIDC trace. Quite verbose. Use only in case of debugging
+  debug: false
+  #
   # Allow overriding of the user login URL. See doc
   # loginURLOverride:
   #
   # Following is to allow automatic creation of client configuration in Dex
   # See https://github.com/OpenDataPlatform/dexi2n
+  # If used, oidc.clientID.value and oidc.clientSecret.value must be defined
   # dexNamespace:
   # encodedClientID:
 
