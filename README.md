@@ -60,7 +60,7 @@ A more formal description of this could be find [here](docs/dexgate-Sequence.jpg
 ### Alternate interaction
 
 - If the user is not authenticated in step 5, `dex` will resend the login page.
-- In step8, if the user is authenticated but its profile does not allow access to the target application to be granted, it will be redirected to an 'allowed' page. 
+- In step8, if the user is authenticated but its profile does not allow access to the target application to be granted, it will be redirected to an 'unallowed' page. 
 
 ### Initialisation:
 
@@ -86,7 +86,7 @@ $ curl https://dex.ingress.my.cluster.com/dex/.well-known/openid-configuration
   ....
 ```
 
-Fortunatly, `dexgate` handle this for you. You don't have to bother with all theses URL. 
+Fortunatly, `dexgate` handle this for you. You don't have to bother with all these URL. 
 
 ## Configuration
 
@@ -103,9 +103,9 @@ The default configuration file is `config.yml`. Its name and path can be overrid
 | bindAddr                    | No     | :9001       | The address `dexgate` will be listening on.                                                                                                                                                                       |
 | targetURL                   | Yes    |             | The internal URL of the targeted web application. Typically, refer to a K8s Service                                                                                                                               |
 | oidc.clientID               | No (1) |             | OAuth2 client ID of this application                                                                                                                                                                              |
-| oidc.clientIDEnv            | No (1) |             | An environment variable where to get OAuth2 client ID of this application                                                                                                                                         |
+| oidc.clientIDEnv            | No (1) |             | An environment variable hosting the OAuth2 client ID of this application                                                                                                                                          |
 | oidc.clientSecret           | No (2) |             | The secret associated to this client ID                                                                                                                                                                           |
-| oidc.clientSecretEnv        | No (2) |             | An environment variable where to get the secret associated to this client ID                                                                                                                                      |
+| oidc.clientSecretEnv        | No (2) |             | An environment variable hosting the secret associated to this client ID                                                                                                                                           |
 | oidc.issuerURL              | Yes    |             | The OIDC server main URL entry. See above                                                                                                                                                                         |
 | oidc.redirectURL            | Yes    |             | Where the OIDC server will redirect the user once authenticated. Must ends with `/dg_callback` (See 'entry points' below). For security reasons, this URL must be also provided in the OIDC server configuration. |
 | oidc.scopes                 | No     | ["profile"] | A list of string defining the type of user information we want to grab from the user. Typically can be ["profile", "email", "groups"]                                                                             |
@@ -114,8 +114,8 @@ The default configuration file is `config.yml`. Its name and path can be overrid
 | oidc.debug                  | No     | False       | Add a bunch of message for OIDC exchange. Quite verbose. To use only for debuging                                                                                                                                 |
 | passthroughs                | No     | []          | A list or URL Path which will go through `dexgate` without any authorisation. A typical usage is to set to [ "/favicon.ico" ]                                                                                     |
 | tokenDisplay                | No     | False       | Display an intermediate page after login, providing tokens values and associated information. For debugging only.                                                                                                 |
-| sessionConfig.idleTimeout   | No     | 15m         | The maximum time a session can be inactive before being expired                                                                                                                                                   |
-| sessionConfig.lifeTime      | No     | 6h          | The absolute maximum time that a session is valid.                                                                                                                                                                |
+| sessionConfig.idleTimeout   | No     | 15m         | The maximum time the user HTTP session can be inactive before being expired                                                                                                                                       |
+| sessionConfig.lifeTime      | No     | 6h          | The absolute maximum time the user HTTP session is valid.                                                                                                                                                         |
 | userConfigFile              | No (3) |             | The path (Relative to config file) providing users permissions (Exclusive from `userConfigMap.*` parameter). See 'Users permissions' below                                                                        |
 | userConfigMap.configMapName | No (3) |             | The name of the Kubernetes configMap hosting the users permissions. (Exclusive from `userConfigFile` parameter). See 'Users permissions' below                                                                    |
 | userConfigMap.namespace     | No     | Current ns  | The namespace of the above configMap. Default to the `dexgate`'s one.                                                                                                                                             |
@@ -266,7 +266,7 @@ Also you will need to define `dexgate` as a client in the `dex` configuration. T
  
 - Defining an entry in the `staticClients` list of the `dex` configuration.
 - Using the dex gRPC API, which allow dynamic client creation.
-- Providing `dexNamespace` and `encodedClientID` information is the `values.yaml` file. This will generate a OAuth2Client kubernetes resource. 
+- Providing `dexNamespace` and `encodedClientID` information is the `values.yaml` file. This will generate a `OAuth2Client` kubernetes resource. 
 More information on this can be found [here](https://github.com/OpenDataPlatform/dexi2n)
 
 There is also several pattern for defining clientID/Secret, straight in the `values.yaml` file, or by storing them in a kubernetes secret.
