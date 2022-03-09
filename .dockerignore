@@ -1,0 +1,7 @@
+# Exclude all but what will be in the image
+*
+!internal
+!pkg
+!go.mod
+!go.sum
+!main.go
